@@ -1,0 +1,64 @@
+# === Secrets / Environment (never commit API keys) ===
+.env
+.env.local
+.env.*.local
+!.env.example
+
+# === Project spec (kept local, not for remote) ===
+Carbon_Compass_AI_Spec.md
+
+# === Python / Backend ===
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+build/
+develop-eggs/
+eggs/
+.eggs/
+sdist/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+.venv/
+venv/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.coverage
+htmlcov/
+
+# === Node / Frontend ===
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+lerna-debug.log*
+dist/
+dist-ssr/
+.vite/
+
+# === Runtime data cache (regenerated via POST /api/v1/admin/seed-demo) ===
+data/analyses/*
+data/satellite/*
+!data/analyses/.gitkeep
+!data/satellite/.gitkeep
+
+# === IDE / Editor ===
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# === OS ===
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# === Logs / Temp ===
+*.log
+*.tmp
