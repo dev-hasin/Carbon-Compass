@@ -12,6 +12,7 @@ export interface ComponentResult {
   rationale: string;
   observations: string[];
   risk_indicators: string[];
+  extracted_claims: string[];
 }
 
 export interface FacilityAnalysis {
@@ -36,16 +37,6 @@ export interface FacilityAnalysis {
   analyzed_at: string;
 }
 
-export interface HeatmapPoint {
-  analysis_id: string;
-  display_name: string;
-  latitude: number;
-  longitude: number;
-  risk_band: RiskBand;
-  risk_score: number | null;
-  sector: string;
-}
-
 export interface HealthResponse {
   status: string;
   version: string;
@@ -57,3 +48,31 @@ export interface AnalysisListResponse {
   facilities: FacilityAnalysis[];
   total: number;
 }
+
+/** Pipeline stages emitted by the streaming analysis endpoint. */
+export type AnalysisStage =
+  | 'geocoding_satellite'
+  | 'disclosure_scanning'
+  | 'ai_cross_analysis'
+  | 'risk_scoring';
+
+export interface StageEvent {
+  type: 'stage';
+  stage: AnalysisStage;
+  status: 'running' | 'completed';
+  detail: string;
+  image_reference?: string | null;
+  acquisition_date?: string | null;
+}
+
+export interface AnalysisCompleteEvent {
+  type: 'complete';
+  analysis: FacilityAnalysis;
+}
+
+export interface AnalysisErrorEvent {
+  type: 'error';
+  error: string;
+}
+
+export type AnalysisEvent = StageEvent | AnalysisCompleteEvent | AnalysisErrorEvent;

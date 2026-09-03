@@ -5,20 +5,35 @@ export default {
   theme: {
     extend: {
       colors: {
-        forest: {
-          900: '#0F2E26',
-          950: '#0A1F1A',
+        // Carbon Compass dark design system (Figma references):
+        // deep navy/black base with cyan accent and traffic-light risk colors.
+        carbon: {
+          950: '#05070B',
+          900: '#0A0E14',
+          850: '#0D1117',
+          800: '#111823',
+          700: '#1A2332',
+          600: '#243044',
+          500: '#33415C',
         },
-        primary: '#14B8A6',
+        accent: {
+          DEFAULT: '#22D3EE',
+          dim: '#0E7490',
+          soft: '#67E8F9',
+        },
         'risk-green': '#22C55E',
-        'risk-green-dark': '#4ADE80',
+        'risk-green-soft': '#4ADE80',
         'risk-amber': '#F59E0B',
-        'risk-amber-dark': '#FBBF24',
+        'risk-amber-soft': '#FBBF24',
         'risk-red': '#EF4444',
-        'risk-red-dark': '#F87171',
+        'risk-red-soft': '#F87171',
       },
       fontFamily: {
         sans: ['Inter', 'system-ui', '-apple-system', 'sans-serif'],
+      },
+      boxShadow: {
+        card: '0 1px 2px rgba(0,0,0,0.4), 0 0 0 1px rgba(51, 65, 92, 0.25)',
+        glow: '0 0 24px rgba(34, 211, 238, 0.15)',
       },
     },
   },

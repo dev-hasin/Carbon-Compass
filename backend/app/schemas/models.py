@@ -40,6 +40,7 @@ class ComponentResult(BaseModel):
     rationale: str = ""
     observations: List[str] = []
     risk_indicators: List[str] = []
+    extracted_claims: List[str] = []
 
 
 class FacilityAnalysis(BaseModel):
@@ -71,21 +72,6 @@ class HealthResponse(BaseModel):
     apis: dict = {}
 
 
-class HeatmapPoint(BaseModel):
-    analysis_id: str
-    display_name: str
-    latitude: float
-    longitude: float
-    risk_band: RiskBand
-    risk_score: Optional[float] = None
-    sector: str = "mixed"
-
-
 class AnalysisListResponse(BaseModel):
     facilities: List[FacilityAnalysis] = []
     total: int = 0
-
-
-class ErrorResponse(BaseModel):
-    detail: str
-    code: str = "error"

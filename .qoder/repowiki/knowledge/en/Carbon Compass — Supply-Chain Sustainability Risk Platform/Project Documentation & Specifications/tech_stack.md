@@ -1,0 +1,1 @@
+Documentation covers a FastAPI backend (Python 3.10–3.14, uvicorn), a React + Vite + TypeScript + Tailwind + Leaflet frontend, and integrations with Sentinel Hub, Alibaba Cloud Model Studio (Qwen), OpenCage geocoding, and Alibaba Cloud OSS.

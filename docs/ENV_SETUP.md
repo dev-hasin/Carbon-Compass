@@ -27,6 +27,9 @@
 
 ```bash
 # Backend
+python -m venv .venv
+# Windows:              .\.venv\Scripts\activate
+# macOS / Linux:        source .venv/bin/activate
 cd backend
 pip install -r requirements.txt
 uvicorn main:app --reload --port 8000
@@ -36,6 +39,9 @@ cd frontend
 npm install
 npm run dev
 ```
+
+The backend requirements are verified against Python 3.10–3.14. End-to-end smoke tests:
+`powershell -ExecutionPolicy Bypass -File scripts/test.ps1` (backend must be running on :8000).
 
 ## Mock Mode
 

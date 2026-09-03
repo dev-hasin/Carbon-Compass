@@ -1,10 +1,39 @@
 import logging
 from typing import List
+from urllib.parse import parse_qs, unquote, urlparse
 import httpx
 from bs4 import BeautifulSoup
-from app.core.config import get_settings
 
 logger = logging.getLogger(__name__)
+
+SEARCH_HEADERS = {"User-Agent": "CarbonCompass/1.0 (research)"}
+
+
+def _extract_result_links(soup: BeautifulSoup) -> List[str]:
+    """Extract direct result URLs from a DuckDuckGo HTML results page.
+
+    Result anchors point at a DuckDuckGo redirect of the form
+    //duckduckgo.com/l/?uddg=<url-encoded target>&rut=... — decode the
+    target from the uddg parameter and keep absolute http(s) links only.
+    """
+    links = []
+    for a in soup.select("a.result__a"):
+        href = a.get("href", "")
+        if not href:
+            continue
+        if href.startswith("http"):
+            links.append(href)
+            continue
+        try:
+            parsed = urlparse(href)
+            query = parse_qs(parsed.query)
+            if "uddg" in query:
+                target = unquote(query["uddg"][0])
+                if target.startswith("http"):
+                    links.append(target)
+        except Exception:
+            continue
+    return links
 
 
 async def scrape_esg_disclosures(
@@ -32,7 +61,6 @@ async def scrape_esg_disclosures(
 
 
 async def _search_public_disclosures(company_name: str, sector: str) -> tuple:
-    settings = get_settings()
     sources = []
     combined_text = ""
 
@@ -49,29 +77,27 @@ async def _search_public_disclosures(company_name: str, sector: str) -> tuple:
                     resp = await client.get(
                         "https://html.duckduckgo.com/html/",
                         params={"q": query},
-                        headers={"User-Agent": "CarbonCompass/1.0 (research)"}
+                        headers=SEARCH_HEADERS,
                     )
                     if resp.status_code == 200:
                         soup = BeautifulSoup(resp.text, "html.parser")
-                        links = soup.select(".result__url")
-                        for link in links[:3]:
-                            href = link.get("href", "")
-                            if href and href.startswith("http"):
-                                sources.append(href)
-                                try:
-                                    page_resp = await client.get(
-                                        href, timeout=10,
-                                        headers={"User-Agent": "CarbonCompass/1.0 (research)"}
-                                    )
-                                    if page_resp.status_code == 200:
-                                        page_soup = BeautifulSoup(page_resp.text, "html.parser")
-                                        for tag in page_soup(["script", "style", "nav", "footer"]):
-                                            tag.decompose()
-                                        text = page_soup.get_text(separator=" ", strip=True)
-                                        relevant = _extract_relevant_paragraphs(text)
-                                        combined_text += "\n" + relevant
-                                except Exception:
-                                    continue
+                        links = _extract_result_links(soup)
+                        for href in links[:3]:
+                            sources.append(href)
+                            try:
+                                page_resp = await client.get(
+                                    href, timeout=10,
+                                    headers=SEARCH_HEADERS
+                                )
+                                if page_resp.status_code == 200:
+                                    page_soup = BeautifulSoup(page_resp.text, "html.parser")
+                                    for tag in page_soup(["script", "style", "nav", "footer"]):
+                                        tag.decompose()
+                                    text = page_soup.get_text(separator=" ", strip=True)
+                                    relevant = _extract_relevant_paragraphs(text)
+                                    combined_text += "\n" + relevant
+                            except Exception:
+                                continue
                 except Exception:
                     continue
 

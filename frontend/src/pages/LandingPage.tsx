@@ -1,204 +1,174 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import SearchBox from '../components/SearchBox';
-import { analyzeFacility } from '../api';
-import type { FacilityAnalysis } from '../types';
+import DisclaimerBanner from '../components/DisclaimerBanner';
+import { getFacilities } from '../api';
 
-const FEATURES = [
+/**
+ * Copy adapted from the Figma reference with SRS-mandated honesty:
+ * resolution is stated as 10–20m (Sentinel-2), accuracy claims are replaced
+ * with the confidence guard, and "real-time" language is dropped (the SRS
+ * rules continuous monitoring out of scope).
+ */
+const MODULES = [
   {
     icon: (
-      <svg className="w-8 h-8" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="1.5">
+      <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="1.5">
         <path d="M12 21a9.004 9.004 0 008.716-6.747M12 21a9.004 9.004 0 01-8.716-6.747M12 21c2.485 0 4.5-4.03 4.5-9S14.485 3 12 3m0 18c-2.485 0-4.5-4.03-4.5-9S9.515 3 12 3m0 0a8.997 8.997 0 017.843 4.582M12 3a8.997 8.997 0 00-7.843 4.582m15.686 0A11.953 11.953 0 0112 10.5c-2.998 0-5.74-1.1-7.843-2.918m15.686 0A8.959 8.959 0 0121 12c0 .778-.099 1.533-.284 2.253m0 0A17.919 17.919 0 0112 16.5c-3.162 0-6.133-.815-8.716-2.247m0 0A9.015 9.015 0 013 12c0-1.605.42-3.113 1.157-4.418" />
       </svg>
     ),
+    subtitle: 'SENTINEL-2 FEEDS',
     title: 'Satellite Analysis',
-    desc: 'Land-use changes, plume-like features, water discoloration — observable proxies from Sentinel-2 imagery.',
+    desc: 'Detection of land-use changes, industrial expansion, water discoloration near discharge points, and large thermal signatures from public Sentinel-2 imagery.',
+    stat: '10–20m Resolution',
   },
   {
     icon: (
-      <svg className="w-8 h-8" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="1.5">
+      <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="1.5">
         <path d="M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25m0 12.75h7.5m-7.5 3H12M10.5 2.25H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 00-9-9z" />
       </svg>
     ),
+    subtitle: 'NLP CLAIM EXTRACTION',
     title: 'ESG Disclosure Scanning',
-    desc: 'Cross-check public sustainability claims against physical evidence from satellite and activity data.',
+    desc: 'Qwen parses public sustainability reports and ESG filings, extracting stated claims about emissions, energy source, and compliance for cross-checking against observable evidence.',
+    stat: 'Confidence-Guarded',
   },
   {
     icon: (
-      <svg className="w-8 h-8" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="1.5">
-        <path d="M3 13.125C3 12.504 3.504 12 4.125 12h2.25c.621 0 1.125.504 1.125 1.125v6.75C7.5 20.496 6.996 21 6.375 21h-2.25A1.125 1.125 0 013 19.875v-6.75zM9.75 8.625c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125v11.25c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 01-1.125-1.125V8.625zM16.5 4.125c0-.621.504-1.125 1.125-1.125h2.25C20.496 3 21 3.504 21 4.125v15.75c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 01-1.125-1.125V4.125z" />
+      <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="1.5">
+        <path d="M9 12.75L11.25 15 15 9.75m-3-7.036A11.959 11.959 0 013.598 6 11.99 11.99 0 003 9.749c0 5.592 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.31-.21-2.571-.598-3.751h-.152c-3.196 0-6.1-1.248-8.25-3.285z" />
       </svg>
     ),
+    subtitle: 'DECISION-SUPPORT OUTPUT',
     title: 'Risk Scoring (0–100)',
-    desc: 'Weighted aggregation with confidence guardrails. Insufficient Data instead of guessing.',
+    desc: 'A transparent weighted model combining satellite signals, disclosure discrepancies, and shipment activity — returning Insufficient Data rather than guessing when confidence is low.',
+    stat: 'Weighted 40/40/20 Model',
   },
 ];
 
-const ANALYSIS_STEPS = [
-  'Resolving location...',
-  'Fetching satellite imagery...',
-  'Scanning ESG disclosures...',
-  'Running AI analysis...',
-  'Computing risk score...',
-  'Finalizing results...',
+const EVIDENCE_SOURCES = [
+  'ESA Sentinel-2',
+  'Sentinel Hub',
+  'Public ESG Disclosures',
+  'OpenCage Geocoding',
+  'Port Activity Data',
 ];
 
 export default function LandingPage() {
   const navigate = useNavigate();
-  const [isLoading, setIsLoading] = useState(false);
-  const [currentStep, setCurrentStep] = useState(0);
-  const [error, setError] = useState<string | null>(null);
+  const [facilityCount, setFacilityCount] = useState<number | null>(null);
 
-  const handleAnalyze = async (query: string, sector: string) => {
-    setIsLoading(true);
-    setError(null);
-    setCurrentStep(0);
+  // Live stat: real count of analysed facilities — no fabricated marketing numbers.
+  useEffect(() => {
+    getFacilities()
+      .then((res) => setFacilityCount(res.total))
+      .catch(() => setFacilityCount(null));
+  }, []);
 
-    // Animate steps
-    const stepInterval = setInterval(() => {
-      setCurrentStep((prev) => Math.min(prev + 1, ANALYSIS_STEPS.length - 1));
-    }, 4000);
-
-    try {
-      const result: FacilityAnalysis = await analyzeFacility(query, sector || undefined);
-      clearInterval(stepInterval);
-      navigate(`/facility/${result.analysis_id}`);
-    } catch (err: any) {
-      clearInterval(stepInterval);
-      const msg =
-        err?.response?.data?.detail ||
-        'Analysis failed. Please try again or use GPS coordinates.';
-      setError(msg);
-      setIsLoading(false);
-    }
+  const handleAnalyze = (query: string, sector: string) => {
+    navigate(`/analysis?query=${encodeURIComponent(query)}&sector=${encodeURIComponent(sector)}`);
   };
 
   return (
-    <div className="min-h-[calc(100vh-4rem)]">
+    <div className="min-h-[calc(100vh-4rem)] flex flex-col">
       {/* Hero */}
-      <section className="relative overflow-hidden">
-        <div className="absolute inset-0 bg-gradient-to-br from-teal-50 via-white to-emerald-50 dark:from-forest-950 dark:via-forest-900 dark:to-emerald-950/50" />
-        <div className="relative max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 pt-16 pb-12 text-center">
-          <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-teal-100 dark:bg-teal-900/40 text-teal-700 dark:text-teal-300 text-xs font-medium mb-6">
-            <span className="w-1.5 h-1.5 rounded-full bg-teal-500 animate-pulse" />
-            AI-Powered Sustainability Risk Platform
+      <section className="relative overflow-hidden geo-grid">
+        <div className="absolute inset-0 bg-gradient-to-b from-carbon-950 via-transparent to-carbon-900 pointer-events-none" />
+        <div className="absolute inset-0 pointer-events-none">
+          <div className="absolute top-[-180px] left-1/2 -translate-x-1/2 w-[640px] h-[640px] rounded-full bg-accent/10 blur-[140px]" />
+        </div>
+
+        <div className="relative max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 pt-20 pb-16 text-center">
+          <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full border border-accent/40 bg-accent/10 text-accent text-[11px] font-semibold tracking-widest mb-7">
+            <span className="w-1.5 h-1.5 rounded-full bg-accent animate-pulse-dot" />
+            EUDR &amp; CBAM COMPLIANCE RADAR
           </div>
 
-          <h1 className="text-3xl sm:text-4xl lg:text-5xl font-bold text-stone-900 dark:text-stone-50 leading-tight tracking-tight">
-            Self-check your export compliance risk{' '}
-            <span className="text-transparent bg-clip-text bg-gradient-to-r from-teal-500 to-emerald-600">
-              before buyers do.
-            </span>
+          <h1 className="text-3xl sm:text-4xl lg:text-5xl font-bold text-slate-50 leading-tight tracking-tight max-w-3xl mx-auto">
+            AI-powered supply chain sustainability intelligence
           </h1>
 
-          <p className="mt-4 text-base sm:text-lg text-stone-600 dark:text-stone-400 max-w-2xl mx-auto leading-relaxed">
-            AI-powered sustainability risk signals from public satellite data, ESG disclosures,
-            and activity proxies — for Pakistani textile, leather, and manufacturing exporters.
+          <p className="mt-5 text-base sm:text-lg text-slate-400 max-w-2xl mx-auto leading-relaxed">
+            Audit environmental compliance at the facility level before buyers do.
+            Cross-check public satellite imagery and ESG disclosures against
+            observable evidence — automatically.
           </p>
 
-          <div className="mt-10">
-            <SearchBox onSubmit={handleAnalyze} isLoading={isLoading} />
+          <div className="mt-10 animate-fade-up">
+            <SearchBox onSubmit={handleAnalyze} isLoading={false} />
           </div>
 
-          {error && (
-            <div className="mt-4 max-w-xl mx-auto p-3 rounded-lg bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 text-red-700 dark:text-red-300 text-sm">
-              {error}
-            </div>
-          )}
-
-          {/* Loading state */}
-          {isLoading && (
-            <div className="mt-8 max-w-md mx-auto">
-              <div className="bg-white dark:bg-forest-900 rounded-xl p-6 shadow-lg border border-stone-200 dark:border-emerald-800">
-                <div className="flex items-center gap-3 mb-4">
-                  <div className="w-10 h-10 rounded-full bg-teal-100 dark:bg-teal-900/50 flex items-center justify-center">
-                    <svg className="w-5 h-5 text-teal-600 animate-spin" viewBox="0 0 24 24" fill="none">
-                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
-                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
-                    </svg>
-                  </div>
-                  <div>
-                    <p className="font-semibold text-stone-900 dark:text-stone-100 text-sm">Analyzing Facility</p>
-                    <p className="text-xs text-stone-500">This takes 15–30 seconds</p>
-                  </div>
-                </div>
-                <div className="space-y-2">
-                  {ANALYSIS_STEPS.map((step, i) => (
-                    <div
-                      key={i}
-                      className={`flex items-center gap-2 text-sm transition-all duration-500 ${
-                        i < currentStep
-                          ? 'text-teal-600 dark:text-teal-400'
-                          : i === currentStep
-                          ? 'text-stone-900 dark:text-stone-100 font-medium'
-                          : 'text-stone-400 dark:text-stone-600'
-                      }`}
-                    >
-                      {i < currentStep ? (
-                        <svg className="w-4 h-4 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
-                          <path d="M5 13l4 4L19 7" />
-                        </svg>
-                      ) : i === currentStep ? (
-                        <svg className="w-4 h-4 flex-shrink-0 animate-spin" viewBox="0 0 24 24" fill="none">
-                          <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
-                          <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
-                        </svg>
-                      ) : (
-                        <span className="w-4 h-4 flex-shrink-0 rounded-full border-2 border-stone-300 dark:border-stone-600" />
-                      )}
-                      {step}
-                    </div>
-                  ))}
-                </div>
-              </div>
-            </div>
-          )}
+          {/* Live stats — derived from the actual analysis cache */}
+          <div className="mt-8 flex items-center justify-center gap-8 text-sm text-slate-400">
+            <span className="flex items-center gap-2">
+              <span className="w-1.5 h-1.5 rounded-full bg-risk-green" />
+              {facilityCount !== null
+                ? `${facilityCount.toLocaleString()} Facilities Analysed`
+                : 'Loading facility stats...'}
+            </span>
+            <span className="flex items-center gap-2">
+              <span className="w-1.5 h-1.5 rounded-full bg-accent" />
+              Sentinel-2 Optical Pipeline Active
+            </span>
+          </div>
         </div>
       </section>
 
-      {/* Features */}
-      <section className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          {FEATURES.map((f, i) => (
+      {/* Forensic compliance modules */}
+      <section className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-16 w-full">
+        <h2 className="text-xl font-bold text-slate-100 mb-2">Forensic Compliance Modules</h2>
+        <p className="text-sm text-slate-500 mb-8">
+          Three independent evidence layers, each with its own confidence value — a missing layer is disclosed, never guessed.
+        </p>
+
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
+          {MODULES.map((m) => (
             <div
-              key={i}
-              className="p-6 rounded-xl bg-white dark:bg-forest-900 border border-stone-200 dark:border-emerald-800 shadow-sm hover:shadow-md transition-shadow group"
+              key={m.title}
+              className="group rounded-xl border border-carbon-700 bg-carbon-850 p-6 hover:border-accent/50 transition-colors"
             >
-              <div className="w-12 h-12 rounded-lg bg-teal-50 dark:bg-teal-900/30 text-teal-600 dark:text-teal-400 flex items-center justify-center mb-4 group-hover:scale-105 transition-transform">
-                {f.icon}
+              <div className="flex items-start justify-between mb-4">
+                <div className="w-11 h-11 rounded-lg bg-accent/10 border border-accent/30 text-accent flex items-center justify-center">
+                  {m.icon}
+                </div>
+                <span className="text-[10px] font-semibold tracking-widest text-slate-500 mt-2">
+                  {m.subtitle}
+                </span>
               </div>
-              <h3 className="text-lg font-semibold text-stone-900 dark:text-stone-100 mb-2">{f.title}</h3>
-              <p className="text-sm text-stone-600 dark:text-stone-400 leading-relaxed">{f.desc}</p>
+              <h3 className="text-lg font-semibold text-slate-100 mb-2">{m.title}</h3>
+              <p className="text-sm text-slate-400 leading-relaxed">{m.desc}</p>
+              <div className="mt-5 pt-4 border-t border-carbon-700 flex items-center justify-between">
+                <span className="text-xs font-semibold text-accent">{m.stat}</span>
+                <svg className="w-4 h-4 text-slate-600 group-hover:text-accent group-hover:translate-x-0.5 transition-all" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
+                  <path d="M8.25 4.5l7.5 7.5-7.5 7.5" />
+                </svg>
+              </div>
             </div>
           ))}
         </div>
       </section>
 
-      {/* Disclaimer */}
-      <section className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 pb-12">
-        <div className="p-4 rounded-xl bg-amber-50 dark:bg-amber-900/10 border border-amber-200 dark:border-amber-800/50">
-          <div className="flex gap-3">
-            <svg className="w-5 h-5 text-amber-600 dark:text-amber-400 flex-shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
-              <path d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126zM12 15.75h.007v.008H12v-.008z" />
-            </svg>
-            <div>
-              <p className="text-sm font-medium text-amber-800 dark:text-amber-300 mb-1">Satellite Disclaimer</p>
-              <p className="text-sm text-amber-700 dark:text-amber-400">
-                Satellite imagery is observable evidence only. It does not directly measure CO&#8322; or methane emissions.
-                All scores are decision-support risk signals, not certified audit findings.
-              </p>
+      {/* Evidence sources + disclaimer */}
+      <section className="mt-auto">
+        <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+          <div className="rounded-xl border border-carbon-700 bg-carbon-850 px-6 py-5">
+            <p className="text-[10px] font-semibold tracking-widest text-slate-500 mb-3 text-center">
+              VERIFIABLE EVIDENCE SOURCES
+            </p>
+            <div className="flex flex-wrap items-center justify-center gap-x-8 gap-y-2">
+              {EVIDENCE_SOURCES.map((source) => (
+                <span key={source} className="text-sm font-medium text-slate-300">
+                  {source}
+                </span>
+              ))}
             </div>
+          </div>
+
+          <div className="mt-5">
+            <DisclaimerBanner variant="inline" />
           </div>
         </div>
       </section>
-
-      {/* Footer disclaimer */}
-      <footer className="border-t border-stone-200 dark:border-emerald-900/50 py-6">
-        <p className="text-center text-xs text-stone-500 dark:text-stone-500 max-w-2xl mx-auto px-4">
-          Decision-support risk signal only. Not a certified audit finding or regulatory attestation.
-          Carbon Compass uses Qwen via Alibaba Cloud Model Studio + Alibaba Cloud OSS.
-        </p>
-      </footer>
     </div>
   );
 }
