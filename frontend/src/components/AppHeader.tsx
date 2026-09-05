@@ -8,6 +8,7 @@ export default function AppHeader() {
   const navItems = [
     { path: '/', label: 'Home' },
     { path: '/dashboard', label: 'Dashboard' },
+    { path: '/methodology', label: 'Methodology' },
   ];
 
   return (

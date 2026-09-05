@@ -6,9 +6,10 @@ import type { FacilityAnalysis, ComponentResult } from '../types';
 
 function ComponentCard({ component: comp }: { component: ComponentResult }) {
   const isOk = comp.status === 'ok' && comp.score !== null;
+  const score = comp.score ?? 0;
   const scoreColor = !isOk ? 'text-stone-400'
-    : comp.score < 30 ? 'text-green-600 dark:text-green-400'
-    : comp.score <= 60 ? 'text-amber-600 dark:text-amber-400'
+    : score < 30 ? 'text-green-600 dark:text-green-400'
+    : score <= 60 ? 'text-amber-600 dark:text-amber-400'
     : 'text-red-600 dark:text-red-400';
 
   return (
@@ -104,10 +105,19 @@ export default function FacilityDetailPage() {
               <RiskBadge band={facility.risk_band} score={facility.risk_score} size="lg" />
             </div>
           </div>
-          <a href={pdfUrl} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-2 px-5 py-2.5 rounded-lg bg-teal-600 hover:bg-teal-700 text-white font-medium text-sm shadow-sm flex-shrink-0">
-            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2"><path d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" /></svg>
-            Export PDF Report
-          </a>
+          <div className="flex items-center gap-2">
+            <button
+              onClick={() => navigate(`/facility/${facility.analysis_id}/report`)}
+              className="inline-flex items-center gap-2 px-4 py-2.5 rounded-lg border border-stone-300 dark:border-emerald-800 text-sm font-medium text-stone-700 dark:text-stone-300 hover:bg-stone-50 dark:hover:bg-forest-900 transition-colors"
+            >
+              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2"><path d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" /></svg>
+              View Report
+            </button>
+            <a href={pdfUrl} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-2 px-5 py-2.5 rounded-lg bg-teal-600 hover:bg-teal-700 text-white font-medium text-sm shadow-sm flex-shrink-0">
+              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2"><path d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" /></svg>
+              Export PDF
+            </a>
+          </div>
         </div>
 
         {/* Score overview cards */}
@@ -195,7 +205,7 @@ export default function FacilityDetailPage() {
                     {src.startsWith('http') ? <a href={src} target="_blank" rel="noopener noreferrer" className="text-teal-600 hover:underline">{src}</a> : src}
                   </li>
                 ))}
-                <li className="text-sm text-stone-600 dark:text-stone-400">Shipping proxy — Port proximity analysis</li>
+                <li className="text-sm text-stone-600 dark:text-stone-400">Shipping Activity — Port proximity analysis</li>
               </ul>
             </div>
           </div>

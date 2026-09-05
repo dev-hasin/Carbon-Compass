@@ -2,8 +2,11 @@ import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import { ThemeProvider } from './context/ThemeContext';
 import AppHeader from './components/AppHeader';
 import LandingPage from './pages/LandingPage';
+import AnalysisPage from './pages/AnalysisPage';
 import DashboardPage from './pages/DashboardPage';
 import FacilityDetailPage from './pages/FacilityDetailPage';
+import ReportPage from './pages/ReportPage';
+import MethodologyPage from './pages/MethodologyPage';
 
 export default function App() {
   return (
@@ -13,8 +16,11 @@ export default function App() {
           <AppHeader />
           <Routes>
             <Route path="/" element={<LandingPage />} />
+            <Route path="/analyze" element={<AnalysisPage />} />
             <Route path="/dashboard" element={<DashboardPage />} />
             <Route path="/facility/:id" element={<FacilityDetailPage />} />
+            <Route path="/facility/:id/report" element={<ReportPage />} />
+            <Route path="/methodology" element={<MethodologyPage />} />
           </Routes>
         </div>
       </BrowserRouter>

@@ -4,7 +4,7 @@ import type {
   AnalysisListResponse,
   HealthResponse,
   HeatmapPoint,
-} from '../types';
+} from './types';
 
 const BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000';
 
@@ -66,4 +66,79 @@ export function getSatelliteImageUrl(filename: string): string {
 
 export function getReportPdfUrl(analysisId: string): string {
   return `${BASE_URL}/api/v1/facilities/${analysisId}/report.pdf`;
+}
+
+/* ── SSE stream reader ─────────────────────────────────────────────── */
+
+export interface SSEStageEvent {
+  stage: string;
+  status: 'running' | 'completed' | 'error' | 'insufficient_data';
+  [key: string]: unknown;
+}
+
+export interface SSECompleteEvent {
+  analysis_id: string;
+  risk_score: number | null;
+  risk_band: string;
+  overall_status: string;
+}
+
+export interface SSEInitEvent {
+  analysis_id: string;
+  query: string;
+  stages: Record<string, string>;
+}
+
+export type SSEEvent =
+  | { type: 'init'; data: SSEInitEvent }
+  | { type: 'stage'; data: SSEStageEvent }
+  | { type: 'complete'; data: SSECompleteEvent }
+  | { type: 'error'; data: { message: string } };
+
+export async function analyzeFacilityStream(
+  query: string,
+  sector: string | undefined,
+  onEvent: (event: SSEEvent) => void,
+): Promise<void> {
+  const url = `${BASE_URL}/api/v1/facilities/analyze/stream`;
+  const response = await fetch(url, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ query, sector: sector || null }),
+  });
+
+  if (!response.ok) {
+    const err = await response.json().catch(() => ({ detail: 'Stream request failed' }));
+    throw new Error(err.detail || `HTTP ${response.status}`);
+  }
+
+  const reader = response.body?.getReader();
+  if (!reader) throw new Error('No response body');
+
+  const decoder = new TextDecoder();
+  let buffer = '';
+
+  while (true) {
+    const { done, value } = await reader.read();
+    if (done) break;
+
+    buffer += decoder.decode(value, { stream: true });
+    const lines = buffer.split('\n');
+    buffer = lines.pop() || '';
+
+    let currentEvent = '';
+    for (const line of lines) {
+      if (line.startsWith('event: ')) {
+        currentEvent = line.slice(7).trim();
+      } else if (line.startsWith('data: ') && currentEvent) {
+        try {
+          const data = JSON.parse(line.slice(6));
+          onEvent({ type: currentEvent, data } as SSEEvent);
+        } catch {
+          // skip malformed JSON
+        }
+        currentEvent = '';
+      }
+    }
+  }
 }

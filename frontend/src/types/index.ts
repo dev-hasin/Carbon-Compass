@@ -57,3 +57,20 @@ export interface AnalysisListResponse {
   facilities: FacilityAnalysis[];
   total: number;
 }
+
+/* leaflet.heat type declarations */
+declare module 'leaflet' {
+  function heatLayer(
+    latlngs: Array<[number, number, number]>,
+    options?: HeatMapOptions,
+  ): Layer;
+
+  interface HeatMapOptions {
+    minOpacity?: number;
+    maxZoom?: number;
+    max?: number;
+    radius?: number;
+    blur?: number;
+    gradient?: Record<number, string>;
+  }
+}

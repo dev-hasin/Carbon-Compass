@@ -1,8 +1,5 @@
-import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import SearchBox from '../components/SearchBox';
-import { analyzeFacility } from '../api';
-import type { FacilityAnalysis } from '../types';
 
 const FEATURES = [
   {
@@ -34,43 +31,13 @@ const FEATURES = [
   },
 ];
 
-const ANALYSIS_STEPS = [
-  'Resolving location...',
-  'Fetching satellite imagery...',
-  'Scanning ESG disclosures...',
-  'Running AI analysis...',
-  'Computing risk score...',
-  'Finalizing results...',
-];
-
 export default function LandingPage() {
   const navigate = useNavigate();
-  const [isLoading, setIsLoading] = useState(false);
-  const [currentStep, setCurrentStep] = useState(0);
-  const [error, setError] = useState<string | null>(null);
 
   const handleAnalyze = async (query: string, sector: string) => {
-    setIsLoading(true);
-    setError(null);
-    setCurrentStep(0);
-
-    // Animate steps
-    const stepInterval = setInterval(() => {
-      setCurrentStep((prev) => Math.min(prev + 1, ANALYSIS_STEPS.length - 1));
-    }, 4000);
-
-    try {
-      const result: FacilityAnalysis = await analyzeFacility(query, sector || undefined);
-      clearInterval(stepInterval);
-      navigate(`/facility/${result.analysis_id}`);
-    } catch (err: any) {
-      clearInterval(stepInterval);
-      const msg =
-        err?.response?.data?.detail ||
-        'Analysis failed. Please try again or use GPS coordinates.';
-      setError(msg);
-      setIsLoading(false);
-    }
+    const params = new URLSearchParams({ q: query });
+    if (sector) params.set('sector', sector);
+    navigate(`/analyze?${params.toString()}`);
   };
 
   return (
@@ -97,62 +64,8 @@ export default function LandingPage() {
           </p>
 
           <div className="mt-10">
-            <SearchBox onSubmit={handleAnalyze} isLoading={isLoading} />
+            <SearchBox onSubmit={handleAnalyze} isLoading={false} />
           </div>
-
-          {error && (
-            <div className="mt-4 max-w-xl mx-auto p-3 rounded-lg bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 text-red-700 dark:text-red-300 text-sm">
-              {error}
-            </div>
-          )}
-
-          {/* Loading state */}
-          {isLoading && (
-            <div className="mt-8 max-w-md mx-auto">
-              <div className="bg-white dark:bg-forest-900 rounded-xl p-6 shadow-lg border border-stone-200 dark:border-emerald-800">
-                <div className="flex items-center gap-3 mb-4">
-                  <div className="w-10 h-10 rounded-full bg-teal-100 dark:bg-teal-900/50 flex items-center justify-center">
-                    <svg className="w-5 h-5 text-teal-600 animate-spin" viewBox="0 0 24 24" fill="none">
-                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
-                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
-                    </svg>
-                  </div>
-                  <div>
-                    <p className="font-semibold text-stone-900 dark:text-stone-100 text-sm">Analyzing Facility</p>
-                    <p className="text-xs text-stone-500">This takes 15–30 seconds</p>
-                  </div>
-                </div>
-                <div className="space-y-2">
-                  {ANALYSIS_STEPS.map((step, i) => (
-                    <div
-                      key={i}
-                      className={`flex items-center gap-2 text-sm transition-all duration-500 ${
-                        i < currentStep
-                          ? 'text-teal-600 dark:text-teal-400'
-                          : i === currentStep
-                          ? 'text-stone-900 dark:text-stone-100 font-medium'
-                          : 'text-stone-400 dark:text-stone-600'
-                      }`}
-                    >
-                      {i < currentStep ? (
-                        <svg className="w-4 h-4 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
-                          <path d="M5 13l4 4L19 7" />
-                        </svg>
-                      ) : i === currentStep ? (
-                        <svg className="w-4 h-4 flex-shrink-0 animate-spin" viewBox="0 0 24 24" fill="none">
-                          <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
-                          <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
-                        </svg>
-                      ) : (
-                        <span className="w-4 h-4 flex-shrink-0 rounded-full border-2 border-stone-300 dark:border-stone-600" />
-                      )}
-                      {step}
-                    </div>
-                  ))}
-                </div>
-              </div>
-            </div>
-          )}
         </div>
       </section>
 

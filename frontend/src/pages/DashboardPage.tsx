@@ -1,21 +1,32 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import FacilityMap from '../components/FacilityMap';
 import RiskBadge from '../components/RiskBadge';
 import { getHeatmap, seedDemo } from '../api';
 import type { HeatmapPoint } from '../types';
 import { useNavigate } from 'react-router-dom';
 
-const SECTORS = [
-  { value: 'all', label: 'All Sectors' },
-  { value: 'textile', label: 'Textile' },
-  { value: 'leather', label: 'Leather' },
-  { value: 'manufacturing', label: 'Manufacturing' },
-  { value: 'mixed', label: 'Mixed' },
-];
+const SECTORS = ['all', 'textile', 'leather', 'manufacturing', 'mixed'];
+const RISK_LEVELS = ['all', 'low', 'medium', 'high', 'unknown'];
+
+function exportCSV(facilities: HeatmapPoint[]) {
+  const header = 'Facility,Sector,Region,Latitude,Longitude,Risk Score,Risk Band';
+  const rows = facilities.map((f) =>
+    `"${f.display_name}","${f.sector}","${f.latitude.toFixed(4)}","${f.longitude.toFixed(4)}","${f.risk_score ?? 'N/A'}","${f.risk_band}"`
+  );
+  const csv = [header, ...rows].join('\n');
+  const blob = new Blob([csv], { type: 'text/csv' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = 'carbon-compass-exporters.csv';
+  a.click();
+  URL.revokeObjectURL(url);
+}
 
 export default function DashboardPage() {
-  const [points, setPoints] = useState<HeatmapPoint[]>([]);
+  const [allPoints, setAllPoints] = useState<HeatmapPoint[]>([]);
   const [sector, setSector] = useState('all');
+  const [riskFilter, setRiskFilter] = useState('all');
   const [loading, setLoading] = useState(true);
   const [seeding, setSeeding] = useState(false);
   const navigate = useNavigate();
@@ -24,9 +35,9 @@ export default function DashboardPage() {
     setLoading(true);
     try {
       const res = await getHeatmap(s === 'all' ? undefined : s);
-      setPoints(res.points);
+      setAllPoints(res.points);
     } catch {
-      setPoints([]);
+      setAllPoints([]);
     } finally {
       setLoading(false);
     }
@@ -48,6 +59,32 @@ export default function DashboardPage() {
     }
   };
 
+  // Filtered points
+  const points = useMemo(() => {
+    if (riskFilter === 'all') return allPoints;
+    return allPoints.filter((p) => p.risk_band === riskFilter);
+  }, [allPoints, riskFilter]);
+
+  // Metrics
+  const metrics = useMemo(() => {
+    const scored = allPoints.filter((p) => p.risk_score !== null);
+    const avgScore = scored.length > 0
+      ? Math.round(scored.reduce((s, p) => s + (p.risk_score ?? 0), 0) / scored.length)
+      : null;
+    const highRisk = allPoints.filter((p) => p.risk_band === 'high').length;
+    const insufficient = allPoints.filter((p) => p.risk_band === 'unknown').length;
+    return { total: allPoints.length, avgScore, highRisk, insufficient };
+  }, [allPoints]);
+
+  // Unique regions from current data
+  const regions = useMemo(() => {
+    const set = new Set(allPoints.map((p) => {
+      // Infer region from point (not stored in HeatmapPoint, so skip)
+      return '';
+    }));
+    return Array.from(set).filter(Boolean);
+  }, [allPoints]);
+
   return (
     <div className="min-h-[calc(100vh-4rem)] flex flex-col">
       <div className="max-w-7xl mx-auto w-full px-4 sm:px-6 lg:px-8 py-6 flex-1 flex flex-col">
@@ -56,7 +93,7 @@ export default function DashboardPage() {
           <div>
             <h1 className="text-2xl font-bold text-stone-900 dark:text-stone-50">Sustainability Dashboard</h1>
             <p className="text-sm text-stone-600 dark:text-stone-400 mt-1">
-              {points.length} facilit{points.length === 1 ? 'y' : 'ies'} analysed
+              {allPoints.length} facilit{allPoints.length === 1 ? 'y' : 'ies'} analysed
             </p>
           </div>
           <div className="flex items-center gap-3">
@@ -66,9 +103,17 @@ export default function DashboardPage() {
               className="px-3 py-2 rounded-lg border border-stone-300 dark:border-emerald-800 bg-white dark:bg-forest-900 text-sm text-stone-700 dark:text-stone-300 focus:outline-none focus:ring-2 focus:ring-teal-500"
             >
               {SECTORS.map((s) => (
-                <option key={s.value} value={s.value}>{s.label}</option>
+                <option key={s} value={s}>{s === 'all' ? 'All Sectors' : s.charAt(0).toUpperCase() + s.slice(1)}</option>
               ))}
             </select>
+            <button
+              onClick={() => exportCSV(points)}
+              disabled={points.length === 0}
+              className="px-3 py-2 rounded-lg border border-stone-300 dark:border-emerald-800 text-sm font-medium text-stone-700 dark:text-stone-300 hover:bg-stone-50 dark:hover:bg-forest-900 disabled:opacity-50 transition-colors"
+              title="Export registry as CSV"
+            >
+              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2"><path d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" /></svg>
+            </button>
             <button
               onClick={handleSeed}
               disabled={seeding}
@@ -79,7 +124,29 @@ export default function DashboardPage() {
           </div>
         </div>
 
-        {points.length === 0 && !loading ? (
+        {/* Metric cards */}
+        {allPoints.length > 0 && (
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-6">
+            <div className="p-4 rounded-xl bg-white dark:bg-forest-900 border border-stone-200 dark:border-emerald-800 shadow-sm">
+              <p className="text-[10px] font-bold uppercase tracking-wider text-stone-500 mb-1">Monitored</p>
+              <p className="text-2xl font-bold text-stone-900 dark:text-stone-100">{metrics.total}</p>
+            </div>
+            <div className="p-4 rounded-xl bg-white dark:bg-forest-900 border border-stone-200 dark:border-emerald-800 shadow-sm">
+              <p className="text-[10px] font-bold uppercase tracking-wider text-stone-500 mb-1">Avg Risk Score</p>
+              <p className="text-2xl font-bold text-stone-900 dark:text-stone-100">{metrics.avgScore ?? '—'}</p>
+            </div>
+            <div className="p-4 rounded-xl bg-white dark:bg-forest-900 border border-stone-200 dark:border-emerald-800 shadow-sm">
+              <p className="text-[10px] font-bold uppercase tracking-wider text-stone-500 mb-1">High Risk</p>
+              <p className="text-2xl font-bold text-red-600 dark:text-red-400">{metrics.highRisk}</p>
+            </div>
+            <div className="p-4 rounded-xl bg-white dark:bg-forest-900 border border-stone-200 dark:border-emerald-800 shadow-sm">
+              <p className="text-[10px] font-bold uppercase tracking-wider text-stone-500 mb-1">Insufficient</p>
+              <p className="text-2xl font-bold text-stone-500">{metrics.insufficient}</p>
+            </div>
+          </div>
+        )}
+
+        {allPoints.length === 0 && !loading ? (
           /* Empty state */
           <div className="flex-1 flex items-center justify-center">
             <div className="text-center p-12">
@@ -104,37 +171,93 @@ export default function DashboardPage() {
             </div>
           </div>
         ) : (
-          /* Map + facility list */
-          <div className="flex-1 grid grid-cols-1 lg:grid-cols-3 gap-6 min-h-0">
-            <div className="lg:col-span-2 min-h-[400px] lg:min-h-0">
-              <FacilityMap
-                points={points}
-                center={[31.4, 73.5]}
-                zoom={7}
-                className="h-full min-h-[400px]"
-              />
+          /* Map + sidebar + facility list */
+          <div className="flex-1 grid grid-cols-1 lg:grid-cols-4 gap-6 min-h-0">
+            {/* Sidebar filters */}
+            <div className="lg:col-span-1 space-y-4 order-2 lg:order-1">
+              {/* Risk filter */}
+              <div className="p-4 rounded-xl bg-white dark:bg-forest-900 border border-stone-200 dark:border-emerald-800 shadow-sm">
+                <p className="text-xs font-bold uppercase tracking-wider text-stone-500 dark:text-stone-400 mb-3">Risk Level</p>
+                <div className="space-y-1.5">
+                  {RISK_LEVELS.map((r) => {
+                    const count = r === 'all' ? allPoints.length : allPoints.filter((p) => p.risk_band === r).length;
+                    const isActive = riskFilter === r;
+                    return (
+                      <button
+                        key={r}
+                        onClick={() => setRiskFilter(r)}
+                        className={`w-full flex items-center justify-between px-3 py-1.5 rounded-lg text-sm transition-colors ${
+                          isActive
+                            ? 'bg-teal-50 dark:bg-teal-900/30 text-teal-700 dark:text-teal-300 font-medium'
+                            : 'text-stone-600 dark:text-stone-400 hover:bg-stone-50 dark:hover:bg-stone-800/50'
+                        }`}
+                      >
+                        <span className="flex items-center gap-2">
+                          {r !== 'all' && (
+                            <span className={`w-2.5 h-2.5 rounded-full ${
+                              r === 'low' ? 'bg-green-500' : r === 'medium' ? 'bg-amber-500' : r === 'high' ? 'bg-red-500' : 'bg-gray-400'
+                            }`} />
+                          )}
+                          {r === 'all' ? 'All Levels' : r === 'unknown' ? 'Insufficient' : r.charAt(0).toUpperCase() + r.slice(1)}
+                        </span>
+                        <span className="text-xs text-stone-400">{count}</span>
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
             </div>
 
-            <div className="space-y-3 overflow-y-auto max-h-[600px] lg:max-h-[calc(100vh-12rem)] pr-1">
-              {points.map((point) => (
-                <button
-                  key={point.analysis_id}
-                  onClick={() => navigate(`/facility/${point.analysis_id}`)}
-                  className="w-full text-left p-4 rounded-xl bg-white dark:bg-forest-900 border border-stone-200 dark:border-emerald-800 hover:shadow-md transition-all group"
-                >
-                  <div className="flex items-start justify-between gap-2">
-                    <div className="min-w-0">
-                      <h4 className="font-semibold text-sm text-stone-900 dark:text-stone-100 truncate group-hover:text-teal-600 dark:group-hover:text-teal-400 transition-colors">
-                        {point.display_name}
-                      </h4>
-                      <p className="text-xs text-stone-500 dark:text-stone-500 mt-0.5 capitalize">
-                        {point.sector} — {point.latitude.toFixed(2)}, {point.longitude.toFixed(2)}
-                      </p>
-                    </div>
-                    <RiskBadge band={point.risk_band} score={point.risk_score} size="sm" />
-                  </div>
-                </button>
-              ))}
+            {/* Map + list */}
+            <div className="lg:col-span-3 flex flex-col gap-4 min-h-0 order-1 lg:order-2">
+              <div className="min-h-[400px] lg:min-h-[400px] flex-1">
+                <FacilityMap
+                  points={points}
+                  center={[31.4, 73.5]}
+                  zoom={7}
+                  className="h-full min-h-[400px]"
+                />
+              </div>
+
+              {/* Facility registry table */}
+              <div className="rounded-xl bg-white dark:bg-forest-900 border border-stone-200 dark:border-emerald-800 shadow-sm overflow-hidden">
+                <div className="flex items-center justify-between px-4 py-3 border-b border-stone-200 dark:border-emerald-900/50">
+                  <p className="text-xs font-bold uppercase tracking-wider text-stone-500">Monitored Exporters</p>
+                  <button
+                    onClick={() => exportCSV(points)}
+                    disabled={points.length === 0}
+                    className="text-xs text-teal-600 dark:text-teal-400 font-medium hover:underline disabled:opacity-50"
+                  >
+                    Export CSV
+                  </button>
+                </div>
+                <div className="overflow-x-auto max-h-[300px] overflow-y-auto">
+                  <table className="w-full text-sm">
+                    <thead className="sticky top-0 bg-stone-50 dark:bg-stone-900/50">
+                      <tr>
+                        <th className="text-left px-4 py-2 text-xs font-semibold text-stone-500">Facility</th>
+                        <th className="text-left px-4 py-2 text-xs font-semibold text-stone-500">Sector</th>
+                        <th className="text-center px-4 py-2 text-xs font-semibold text-stone-500">Score</th>
+                        <th className="text-center px-4 py-2 text-xs font-semibold text-stone-500">Band</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-stone-100 dark:divide-emerald-900/30">
+                      {points.map((point) => (
+                        <tr
+                          key={point.analysis_id}
+                          onClick={() => navigate(`/facility/${point.analysis_id}`)}
+                          className="cursor-pointer hover:bg-stone-50 dark:hover:bg-stone-800/30 transition-colors"
+                        >
+                          <td className="px-4 py-2.5 font-medium text-stone-900 dark:text-stone-100 truncate max-w-[200px]">{point.display_name}</td>
+                          <td className="px-4 py-2.5 text-stone-600 dark:text-stone-400 capitalize">{point.sector}</td>
+                          <td className="px-4 py-2.5 text-center font-semibold text-stone-900 dark:text-stone-100">{point.risk_score ?? '—'}</td>
+                          <td className="px-4 py-2.5 text-center"><RiskBadge band={point.risk_band} score={point.risk_score} size="sm" /></td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
             </div>
           </div>
         )}

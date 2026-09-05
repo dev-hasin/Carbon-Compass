@@ -34,7 +34,7 @@ async def geocode(query: str) -> dict:
 
     settings = get_settings()
     if not settings.has_geocoding:
-        return _mock_geocode(query)
+        return _fallback_geocode(query)
 
     try:
         async with httpx.AsyncClient(timeout=15) as client:
@@ -66,10 +66,11 @@ async def geocode(query: str) -> dict:
 
     except Exception as e:
         logger.error(f"Geocoding error: {e}")
-        return _mock_geocode(query)
+        return _fallback_geocode(query)
 
 
-def _mock_geocode(query: str) -> dict:
+def _fallback_geocode(query: str) -> dict:
+    """Offline fallback using known Pakistani industrial centres."""
     known = {
         "faisalabad": (31.418, 73.079, "Faisalabad, Punjab, Pakistan"),
         "kasur": (31.12, 74.45, "Kasur, Punjab, Pakistan"),
@@ -83,15 +84,12 @@ def _mock_geocode(query: str) -> dict:
             return {
                 "latitude": lat,
                 "longitude": lng,
-                "display_name": f"{name} (mock)",
+                "display_name": name,
                 "resolved": True,
-                "source": "mock"
+                "source": "local_cache"
             }
 
     return {
-        "latitude": 31.418,
-        "longitude": 73.079,
-        "display_name": f"{query} — approximated to Faisalabad region (mock)",
-        "resolved": True,
-        "source": "mock"
+        "resolved": False,
+        "error": "Could not resolve location. Please try GPS coordinates (e.g. 31.42, 73.08) or a known city name."
     }

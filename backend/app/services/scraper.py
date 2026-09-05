@@ -28,7 +28,12 @@ async def scrape_esg_disclosures(
         }
     except Exception as e:
         logger.error(f"ESG scraping error: {e}")
-        return _mock_esg(company_name, sector)
+        return {
+            "status": "insufficient_data",
+            "extracted_text": "",
+            "sources": [],
+            "rationale": "Public disclosure scanning encountered an error. Unable to retrieve ESG data for this entity."
+        }
 
 
 async def _search_public_disclosures(company_name: str, sector: str) -> tuple:
@@ -98,34 +103,3 @@ def _extract_relevant_paragraphs(text: str) -> str:
             if len(s.strip()) > 20:
                 relevant.append(s.strip())
     return ". ".join(relevant[:15]) + "." if relevant else ""
-
-
-def _mock_esg(company_name: str, sector: str) -> dict:
-    mock_texts = {
-        "textile": (
-            "The company states commitment to reducing carbon footprint through energy-efficient "
-            "manufacturing processes. Annual sustainability report mentions 15% renewable energy mix "
-            "target by 2025. Water treatment facility claimed operational since 2022. Third-party "
-            "environmental audit status not disclosed in public filings. Waste management practices "
-            "referenced in annual report but specific metrics not provided."
-        ),
-        "leather": (
-            "Public disclosures reference chromium management protocols but independent verification "
-            "not found. Tannery effluent treatment plant mentioned in press releases. Energy source "
-            "primarily fossil-fuel based with no stated renewable transition plan. Worker safety "
-            "compliance referenced but detailed environmental impact assessment not publicly available."
-        ),
-        "manufacturing": (
-            "Company reports compliance with provincial environmental regulations. Solar panel "
-            "installation announced for rooftop power generation. ISO 14001 certification mentioned "
-            "in annual report. Waste reduction targets stated but third-party verification limited. "
-            "Water recycling claims documented in sustainability brochure."
-        ),
-    }
-    text = mock_texts.get(sector, mock_texts["textile"])
-    return {
-        "status": "mock",
-        "extracted_text": text,
-        "sources": ["mock://public-disclosure-simulation"],
-        "rationale": "Mock ESG data (live scraping unavailable). Simulated disclosure text for demo."
-    }

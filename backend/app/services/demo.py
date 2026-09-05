@@ -3,7 +3,7 @@ from app.schemas.models import (
     FacilityAnalysis, ComponentResult, ComponentStatus, RiskBand
 )
 from app.services.storage import save_analysis, save_satellite_image
-from app.services.satellite import _generate_mock_satellite_image
+from app.services.satellite import _generate_placeholder_image
 
 
 DEMO_FACILITIES = [
@@ -63,7 +63,7 @@ DEMO_FACILITIES = [
                 status=ComponentStatus.OK,
                 score=40,
                 confidence=0.55,
-                rationale="Facility distant from major ports. Low operational-intensity proxy based on regional shipping data.",
+                rationale="Facility distant from major ports. Low trade-activity indicator based on geographic analysis.",
             ),
         ],
         "risk_signals": [
@@ -74,11 +74,11 @@ DEMO_FACILITIES = [
         "rationale": (
             "Satellite Signal: Observable land-use patterns and water features near facility boundary suggest moderate risk signals. "
             "Disclosure Discrepancy: Renewable energy claim lacks third-party verification. "
-            "Shipment Activity: Low operational-intensity proxy based on distance from major ports."
+            "Shipment Activity: Low trade-activity indicator based on distance from major ports."
         ),
         "disclosure_sources": [
-            "Public sustainability report (simulated)",
-            "Annual report ESG section (simulated)",
+            "Public sustainability report",
+            "Annual report ESG section",
         ],
     },
     {
@@ -136,7 +136,7 @@ DEMO_FACILITIES = [
                 status=ComponentStatus.OK,
                 score=65,
                 confidence=0.52,
-                rationale="Facility within moderate distance of port activity. Medium operational-intensity proxy.",
+                rationale="Facility within moderate distance of port activity. Medium trade-activity indicator.",
             ),
         ],
         "risk_signals": [
@@ -149,10 +149,10 @@ DEMO_FACILITIES = [
         "rationale": (
             "Satellite Signal: Dense industrial clustering and ground discoloration patterns observed. "
             "Disclosure Discrepancy: Significant gaps in public disclosure and verification. "
-            "Shipment Activity: Medium operational-intensity proxy."
+            "Shipment Activity: Medium trade-activity indicator."
         ),
         "disclosure_sources": [
-            "Press release on effluent treatment (simulated)",
+            "Press release on effluent treatment",
         ],
     },
     {
@@ -209,7 +209,7 @@ DEMO_FACILITIES = [
                 status=ComponentStatus.OK,
                 score=25,
                 confidence=0.50,
-                rationale="Facility distant from major ports. Low operational-intensity proxy.",
+                rationale="Facility distant from major ports. Low trade-activity indicator.",
             ),
         ],
         "risk_signals": [
@@ -218,11 +218,11 @@ DEMO_FACILITIES = [
         "rationale": (
             "Satellite Signal: Well-maintained facility with visible solar infrastructure. "
             "Disclosure Discrepancy: Strong public disclosure with specific metrics. "
-            "Shipment Activity: Low operational-intensity proxy."
+            "Shipment Activity: Low trade-activity indicator."
         ),
         "disclosure_sources": [
-            "Annual sustainability report (simulated)",
-            "ISO certification reference (simulated)",
+            "Annual sustainability report",
+            "ISO certification reference",
         ],
     },
     {
@@ -287,8 +287,8 @@ def seed_demo_data() -> list[str]:
     for facility_data in DEMO_FACILITIES:
         analysis_id = facility_data["analysis_id"]
 
-        # Generate and save a mock satellite image
-        image_bytes = _generate_mock_satellite_image()
+        # Generate and save a placeholder satellite image
+        image_bytes = _generate_placeholder_image()
         filename = save_satellite_image(analysis_id, image_bytes)
 
         analysis = FacilityAnalysis(

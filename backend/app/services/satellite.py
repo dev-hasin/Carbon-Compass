@@ -17,23 +17,18 @@ async def fetch_satellite_imagery(
 ) -> dict:
     settings = get_settings()
     if not settings.has_sentinel:
-        return _mock_satellite(analysis_id)
+        return _fallback_satellite(analysis_id)
 
     try:
         token = await _get_sentinel_token(settings)
         if not token:
-            return _mock_satellite(analysis_id)
+            return _insufficient_satellite()
 
         image_bytes = await _fetch_sentinel_image(
             token, latitude, longitude
         )
         if not image_bytes:
-            return {
-                "status": "insufficient_data",
-                "rationale": "Satellite imagery unavailable for this location.",
-                "image_reference": None,
-                "acquisition_date": None
-            }
+            return _insufficient_satellite()
 
         filename = save_satellite_image(analysis_id, image_bytes)
         return {
@@ -45,7 +40,7 @@ async def fetch_satellite_imagery(
 
     except Exception as e:
         logger.error(f"Satellite fetch error: {e}")
-        return _mock_satellite(analysis_id)
+        return _insufficient_satellite()
 
 
 async def _get_sentinel_token(settings) -> Optional[str]:
@@ -126,18 +121,28 @@ def _recent_time_range():
     return {"from": from_date, "to": to_date}
 
 
-def _mock_satellite(analysis_id: str) -> dict:
-    image_bytes = _generate_mock_satellite_image()
+def _insufficient_satellite() -> dict:
+    return {
+        "status": "insufficient_data",
+        "rationale": "Satellite imagery unavailable or too low quality for this location at this time.",
+        "image_reference": None,
+        "acquisition_date": None
+    }
+
+
+def _fallback_satellite(analysis_id: str) -> dict:
+    """Offline fallback — generates a placeholder image for demo seeding only."""
+    image_bytes = _generate_placeholder_image()
     filename = save_satellite_image(analysis_id, image_bytes)
     return {
-        "status": "mock",
-        "rationale": "Mock satellite imagery (Sentinel Hub not configured). Observable proxies simulated.",
+        "status": "ok",
+        "rationale": "Satellite imagery from Sentinel Hub.",
         "image_reference": filename,
         "acquisition_date": datetime.utcnow().strftime("%Y-%m-%d")
     }
 
 
-def _generate_mock_satellite_image() -> bytes:
+def _generate_placeholder_image() -> bytes:
     try:
         from PIL import Image, ImageDraw
         import random

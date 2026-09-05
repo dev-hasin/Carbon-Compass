@@ -79,3 +79,14 @@ body {
   transition-duration: 0.2s;
   transition-timing-function: ease;
 }
+
+/* Print styles — light theme for paper */
+@media print {
+  body {
+    background: white !important;
+    color: #1a1a1a !important;
+  }
+  .print\:hidden { display: none !important; }
+  header, nav { display: none !important; }
+  .dark { --bg: white; --surface: white; --text-primary: #1a1a1a; --text-muted: #666; --border: #ddd; }
+}
