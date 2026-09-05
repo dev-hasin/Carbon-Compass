@@ -1,0 +1,1 @@
+`docs/ENV_SETUP.md` specifies the exact bootstrap: create a Python venv, install `requirements.txt`, run `uvicorn main:app --reload --port 8000` for the backend, then `npm install && npm run dev` for the frontend; end-to-end smoke tests are executed via `powershell -ExecutionPolicy Bypass -File scripts/test.ps1` with the backend already running on port 8000.
