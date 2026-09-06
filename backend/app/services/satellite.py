@@ -1,6 +1,5 @@
 import logging
 import io
-import base64
 from datetime import datetime
 from typing import Optional
 import httpx

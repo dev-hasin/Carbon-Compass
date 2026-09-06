@@ -1,7 +1,6 @@
 import json
 import logging
 import base64
-from typing import Optional
 import httpx
 from app.core.config import get_settings
 

@@ -1,0 +1,5 @@
+- External API credentials are stored exclusively in `.env` files and never hard-coded in source; a `.env.example` with variable names only is committed while real values stay out of version control.
+- Every user-facing or AI-generated output must be framed as a 'risk signal' rather than an accusation, and any score must always be accompanied by its confidence level.
+- When any data source is missing or below threshold, the system returns 'Insufficient data' for that component instead of fabricating a value.
+- Each external data source lives in its own ingestion module so it can be tested and failed independently, and all calls go through thin wrapper functions that enable easy mock/cached substitution.
+- Ingestion and analysis functions return a uniform `{data, confidence, source, error}` shape so the Phase 2 confidence guard can enforce consistent failure semantics.

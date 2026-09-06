@@ -2,47 +2,87 @@
 @tailwind components;
 @tailwind utilities;
 
+/* ------------------------------------------------------------------ */
+/* Carbon Compass design tokens (Figma: dark navy + cyan geo-intel)    */
+/* ------------------------------------------------------------------ */
 :root {
-  --bg: #FAFAF9;
-  --surface: #FFFFFF;
-  --primary: #14B8A6;
-  --text-primary: #0A1F1A;
-  --text-muted: #78716C;
-  --border: #E7E5E4;
-  --risk-green: #22C55E;
-  --risk-amber: #F59E0B;
-  --risk-red: #EF4444;
-}
-
-.dark {
-  --bg: #0A1F1A;
-  --surface: #0F2E26;
-  --primary: #14B8A6;
-  --text-primary: #F5F5F4;
-  --text-muted: #A8A29E;
-  --border: #134E3A;
-  --risk-green: #4ADE80;
-  --risk-amber: #FBBF24;
-  --risk-red: #F87171;
+  --bg: #0a0e14;
+  --surface: #111823;
+  --surface-raised: #1a2332;
+  --accent: #22d3ee;
+  --text-primary: #e6edf3;
+  --text-muted: #8b98a9;
+  --border: #243044;
+  --risk-green: #22c55e;
+  --risk-amber: #f59e0b;
+  --risk-red: #ef4444;
 }
 
 body {
   font-family: 'Inter', system-ui, -apple-system, sans-serif;
   background-color: var(--bg);
   color: var(--text-primary);
-  transition: background-color 0.3s, color 0.3s;
+  -webkit-font-smoothing: antialiased;
 }
 
+/* Subtle geospatial grid used behind hero sections */
+.geo-grid {
+  background-image:
+    linear-gradient(rgba(34, 211, 238, 0.05) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(34, 211, 238, 0.05) 1px, transparent 1px);
+  background-size: 44px 44px;
+}
+
+/* ------------------------------------------------------------------ */
+/* Leaflet — dark theme integration                                    */
+/* ------------------------------------------------------------------ */
 .leaflet-container {
   width: 100%;
   height: 100%;
   border-radius: 0.75rem;
+  background: #0a0e14;
+  font-family: 'Inter', system-ui, sans-serif;
   z-index: 1;
 }
 
-/* Custom scrollbar */
+.leaflet-control-zoom a {
+  background: #111823 !important;
+  color: #e6edf3 !important;
+  border-color: #243044 !important;
+}
+
+.leaflet-control-zoom a:hover {
+  background: #1a2332 !important;
+}
+
+.leaflet-control-attribution {
+  background: rgba(13, 17, 23, 0.8) !important;
+  color: #8b98a9 !important;
+  font-size: 10px !important;
+}
+
+.leaflet-control-attribution a {
+  color: #22d3ee !important;
+}
+
+.leaflet-popup-content-wrapper,
+.leaflet-popup-tip {
+  background: #111823;
+  color: #e6edf3;
+  border: 1px solid #243044;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.5);
+}
+
+.leaflet-popup-close-button {
+  color: #8b98a9 !important;
+}
+
+/* ------------------------------------------------------------------ */
+/* Scrollbar                                                           */
+/* ------------------------------------------------------------------ */
 ::-webkit-scrollbar {
-  width: 6px;
+  width: 8px;
+  height: 8px;
 }
 
 ::-webkit-scrollbar-track {
@@ -50,34 +90,68 @@ body {
 }
 
 ::-webkit-scrollbar-thumb {
-  background: var(--text-muted);
-  border-radius: 3px;
+  background: #243044;
+  border-radius: 4px;
 }
 
-/* Pulse animation for loading */
-@keyframes pulse-ring {
-  0% { transform: scale(0.33); }
-  80%, 100% { opacity: 0; }
+::-webkit-scrollbar-thumb:hover {
+  background: #33415c;
+}
+
+/* ------------------------------------------------------------------ */
+/* Animations                                                          */
+/* ------------------------------------------------------------------ */
+@keyframes radar-sweep {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+.animate-radar-sweep {
+  animation: radar-sweep 3s linear infinite;
+  transform-origin: center;
 }
 
 @keyframes pulse-dot {
-  0%, 100% { transform: scale(1); }
-  50% { transform: scale(1.1); }
-}
-
-.animate-pulse-ring {
-  animation: pulse-ring 1.25s cubic-bezier(0.215, 0.61, 0.355, 1) infinite;
+  0%, 100% { transform: scale(1); opacity: 1; }
+  50% { transform: scale(1.35); opacity: 0.6; }
 }
 
 .animate-pulse-dot {
-  animation: pulse-dot 1.25s cubic-bezier(0.455, 0.03, 0.515, 0.955) infinite;
+  animation: pulse-dot 1.6s ease-in-out infinite;
 }
 
-/* Smooth transitions */
-* {
-  transition-property: background-color, border-color;
-  transition-duration: 0.2s;
-  transition-timing-function: ease;
+@keyframes fade-up {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.animate-fade-up {
+  animation: fade-up 0.45s ease-out both;
+}
+
+/* ------------------------------------------------------------------ */
+/* Print — neutralize the dark theme for the shareable report          */
+/* ------------------------------------------------------------------ */
+@media print {
+  body {
+    background: #ffffff !important;
+    color: #111111 !important;
+  }
+
+  .no-print {
+    display: none !important;
+  }
+
+  .print-plain {
+    background: #ffffff !important;
+    border-color: #d1d5db !important;
+    box-shadow: none !important;
+    color: #111111 !important;
+  }
+
+  .print-plain * {
+    color: #111111 !important;
+  }
 }
 
 /* Print styles — light theme for paper */

@@ -1,17 +1,11 @@
 """
-Storage service — local-first with Supabase Storage mirror.
+Storage layer: local filesystem first (fast demo cache), with write-through to
+Alibaba Cloud OSS when configured (durable storage per SRS section 4.3).
 
-Pattern:
-  WRITE: save to local disk → mirror to Supabase (best-effort, never blocks on failure)
-  READ:  check local cache first → if missing, try downloading from Supabase
-  LIST:  always reads from local disk (fast, works offline)
-
-Supabase bucket layout:
-  analyses/<analysis_id>.json
-  satellite/<analysis_id>.png
-  reports/<analysis_id>.pdf
+Every fetched satellite image and generated analysis is written locally AND
+uploaded to OSS. Reads are local-first with an OSS fallback so the demo can run
+from cache even if OSS is unreachable.
 """
-
 import json
 import logging
 import os
@@ -23,41 +17,9 @@ from app.schemas.models import FacilityAnalysis
 
 logger = logging.getLogger(__name__)
 
-# ── Supabase client (lazy singleton) ──────────────────────────────────
+ANALYSES_PREFIX = "analyses"
+SATELLITE_PREFIX = "satellite"
 
-_supabase_client = None
-
-
-def _get_supabase():
-    """Return the Supabase client, creating it once. Returns None if not configured."""
-    global _supabase_client
-    if _supabase_client is not None:
-        return _supabase_client
-
-    settings = get_settings()
-    if not settings.has_supabase:
-        return None
-
-    try:
-        from supabase import create_client
-        _supabase_client = create_client(settings.supabase_url, settings.supabase_anon_key)
-        logger.info("Supabase Storage connected: %s (bucket: %s)", settings.supabase_url, settings.supabase_bucket)
-        return _supabase_client
-    except Exception as exc:
-        logger.warning("Supabase client init failed: %s — falling back to local storage", exc)
-        return None
-
-
-def _bucket():
-    """Return the storage bucket helper, or None."""
-    sb = _get_supabase()
-    if sb is None:
-        return None
-    settings = get_settings()
-    return sb.storage.from_(settings.supabase_bucket)
-
-
-# ── Local filesystem helpers ──────────────────────────────────────────
 
 def _ensure_dirs():
     settings = get_settings()
@@ -65,7 +27,54 @@ def _ensure_dirs():
     os.makedirs(settings.satellite_dir, exist_ok=True)
 
 
-# ── Analysis CRUD ─────────────────────────────────────────────────────
+def _get_oss_bucket():
+    """Return an oss2 Bucket when credentials are set and the SDK is available."""
+    settings = get_settings()
+    if not settings.has_oss:
+        return None
+    try:
+        import oss2
+    except ImportError:
+        logger.warning("OSS credentials set but oss2 package is not installed; using local cache only.")
+        return None
+    try:
+        auth = oss2.Auth(
+            settings.alibaba_oss_access_key_id,
+            settings.alibaba_oss_access_key_secret,
+        )
+        return oss2.Bucket(
+            auth, settings.alibaba_oss_endpoint, settings.alibaba_oss_bucket_name
+        )
+    except Exception as e:
+        logger.error(f"OSS bucket init error: {e}")
+        return None
+
+
+def oss_enabled() -> bool:
+    """True when OSS storage is actually usable (credentials + SDK)."""
+    return _get_oss_bucket() is not None
+
+
+def _oss_put(key: str, data: bytes):
+    """Best-effort upload — storage stays local-first if OSS fails."""
+    bucket = _get_oss_bucket()
+    if not bucket:
+        return
+    try:
+        bucket.put_object(key, data)
+    except Exception as e:
+        logger.error(f"OSS put failed for {key}: {e}")
+
+
+def _oss_get(key: str) -> Optional[bytes]:
+    bucket = _get_oss_bucket()
+    if not bucket:
+        return None
+    try:
+        return bucket.get_object(key).read()
+    except Exception:
+        return None
+
 
 def save_analysis(analysis: FacilityAnalysis) -> str:
     """Save analysis JSON locally + mirror to Supabase."""
@@ -74,24 +83,10 @@ def save_analysis(analysis: FacilityAnalysis) -> str:
 
     # 1. Local write (always)
     path = Path(settings.analyses_dir) / f"{analysis.analysis_id}.json"
-    data = analysis.model_dump(mode="json")
-    data_bytes = json.dumps(data, indent=2, default=str).encode("utf-8")
+    data = analysis.model_dump_json(indent=2)
     with open(path, "w", encoding="utf-8") as f:
-        f.write(data_bytes.decode("utf-8"))
-
-    # 2. Supabase mirror (best-effort)
-    bucket = _bucket()
-    if bucket:
-        try:
-            remote_path = f"analyses/{analysis.analysis_id}.json"
-            bucket.upload(remote_path, data_bytes, {
-                "content-type": "application/json",
-                "upsert": "true",
-            })
-            logger.debug("Supabase: uploaded %s", remote_path)
-        except Exception as exc:
-            logger.warning("Supabase: failed to upload analysis %s: %s", analysis.analysis_id, exc)
-
+        f.write(data)
+    _oss_put(f"{ANALYSES_PREFIX}/{analysis.analysis_id}.json", data.encode("utf-8"))
     return analysis.analysis_id
 
 
@@ -99,31 +94,15 @@ def load_analysis(analysis_id: str) -> Optional[FacilityAnalysis]:
     """Load analysis from local cache; fall back to Supabase download."""
     settings = get_settings()
     path = Path(settings.analyses_dir) / f"{analysis_id}.json"
-
-    # 1. Try local
-    if path.exists():
-        with open(path, "r", encoding="utf-8") as f:
-            data = json.load(f)
-        return FacilityAnalysis(**data)
-
-    # 2. Try Supabase download
-    bucket = _bucket()
-    if bucket:
-        try:
-            remote_path = f"analyses/{analysis_id}.json"
-            response = bucket.download(remote_path)
-            if response:
-                data = json.loads(response)
-                # Cache locally for next read
-                _ensure_dirs()
-                with open(path, "w", encoding="utf-8") as f:
-                    json.dump(data, f, indent=2, default=str)
-                logger.info("Supabase: downloaded and cached %s", remote_path)
-                return FacilityAnalysis(**data)
-        except Exception as exc:
-            logger.debug("Supabase: analysis %s not found in cloud: %s", analysis_id, exc)
-
-    return None
+    if not path.exists():
+        # Fallback: fetch the durable copy from OSS if the local cache was cleared
+        raw = _oss_get(f"{ANALYSES_PREFIX}/{analysis_id}.json")
+        if not raw:
+            return None
+        return FacilityAnalysis(**json.loads(raw))
+    with open(path, "r", encoding="utf-8") as f:
+        data = json.load(f)
+    return FacilityAnalysis(**data)
 
 
 def list_analyses() -> list[FacilityAnalysis]:
@@ -142,29 +121,6 @@ def list_analyses() -> list[FacilityAnalysis]:
     return results
 
 
-def delete_analysis(analysis_id: str) -> bool:
-    """Delete from local disk + Supabase."""
-    settings = get_settings()
-    path = Path(settings.analyses_dir) / f"{analysis_id}.json"
-    deleted = False
-
-    if path.exists():
-        path.unlink()
-        deleted = True
-
-    # Also remove from Supabase
-    bucket = _bucket()
-    if bucket:
-        try:
-            bucket.remove([f"analyses/{analysis_id}.json"])
-        except Exception as exc:
-            logger.debug("Supabase: could not delete analysis %s: %s", analysis_id, exc)
-
-    return deleted
-
-
-# ── Satellite images ──────────────────────────────────────────────────
-
 def save_satellite_image(analysis_id: str, image_bytes: bytes, ext: str = "png") -> str:
     """Save satellite image locally + mirror to Supabase."""
     _ensure_dirs()
@@ -175,20 +131,7 @@ def save_satellite_image(analysis_id: str, image_bytes: bytes, ext: str = "png")
     # 1. Local write
     with open(path, "wb") as f:
         f.write(image_bytes)
-
-    # 2. Supabase mirror
-    bucket = _bucket()
-    if bucket:
-        try:
-            remote_path = f"satellite/{filename}"
-            bucket.upload(remote_path, image_bytes, {
-                "content-type": "image/png",
-                "upsert": "true",
-            })
-            logger.debug("Supabase: uploaded %s", remote_path)
-        except Exception as exc:
-            logger.warning("Supabase: failed to upload satellite %s: %s", filename, exc)
-
+    _oss_put(f"{SATELLITE_PREFIX}/{filename}", image_bytes)
     return filename
 
 
@@ -196,61 +139,12 @@ def get_satellite_image_path(filename: str) -> Optional[str]:
     """Get local path of satellite image; download from Supabase if missing."""
     settings = get_settings()
     path = Path(settings.satellite_dir) / filename
-
-    # 1. Local cache hit
-    if path.exists():
-        return str(path)
-
-    # 2. Try Supabase download
-    bucket = _bucket()
-    if bucket:
-        try:
-            remote_path = f"satellite/{filename}"
-            response = bucket.download(remote_path)
-            if response:
-                _ensure_dirs()
-                with open(path, "wb") as f:
-                    f.write(response)
-                logger.info("Supabase: downloaded and cached satellite %s", remote_path)
-                return str(path)
-        except Exception as exc:
-            logger.debug("Supabase: satellite %s not found in cloud: %s", filename, exc)
-
-    return None
-
-
-# ── PDF reports ───────────────────────────────────────────────────────
-
-def save_report(analysis_id: str, pdf_bytes: bytes) -> Optional[str]:
-    """Upload a generated PDF to Supabase Storage. Returns the public URL or None."""
-    bucket = _bucket()
-    if not bucket:
-        return None
-
-    try:
-        remote_path = f"reports/{analysis_id}.pdf"
-        bucket.upload(remote_path, pdf_bytes, {
-            "content-type": "application/pdf",
-            "upsert": "true",
-        })
-        # Get public URL
-        url_data = bucket.get_public_url(remote_path)
-        logger.debug("Supabase: uploaded report %s → %s", remote_path, url_data)
-        return url_data
-    except Exception as exc:
-        logger.warning("Supabase: failed to upload report %s: %s", analysis_id, exc)
-        return None
-
-
-def get_report_url(analysis_id: str) -> Optional[str]:
-    """Get the public Supabase URL for a cached PDF report, or None."""
-    bucket = _bucket()
-    if not bucket:
-        return None
-
-    try:
-        remote_path = f"reports/{analysis_id}.pdf"
-        url_data = bucket.get_public_url(remote_path)
-        return url_data
-    except Exception:
-        return None
+    if not path.exists():
+        # Fallback: download the durable copy from OSS into the local cache
+        raw = _oss_get(f"{SATELLITE_PREFIX}/{filename}")
+        if not raw:
+            return None
+        _ensure_dirs()
+        with open(path, "wb") as f:
+            f.write(raw)
+    return str(path)

@@ -13,52 +13,25 @@ def compute_risk_score(
     components = []
     available_weights = 0.0
     weighted_sum = 0.0
-    missing_sources = []
 
-    # Satellite component
-    sat_component = _build_component(
-        name="satellite",
-        label="Satellite Signal",
-        weight=settings.scoring_weight_satellite,
-        result=satellite_result,
-        threshold=threshold,
-        score_key="score",
-        confidence_key="confidence"
-    )
-    components.append(sat_component)
-    if sat_component.status == ComponentStatus.OK:
-        available_weights += sat_component.weight
-        weighted_sum += sat_component.weight * sat_component.score
+    component_specs = [
+        ("satellite", "Satellite Signal", settings.scoring_weight_satellite, satellite_result),
+        ("disclosure", "Disclosure Discrepancy", settings.scoring_weight_disclosure, disclosure_result),
+        ("shipping", "Shipment Activity", settings.scoring_weight_shipping, shipping_result),
+    ]
 
-    # Disclosure component
-    disc_component = _build_component(
-        name="disclosure",
-        label="Disclosure Discrepancy",
-        weight=settings.scoring_weight_disclosure,
-        result=disclosure_result,
-        threshold=threshold,
-        score_key="score",
-        confidence_key="confidence"
-    )
-    components.append(disc_component)
-    if disc_component.status == ComponentStatus.OK:
-        available_weights += disc_component.weight
-        weighted_sum += disc_component.weight * disc_component.score
-
-    # Shipping component
-    ship_component = _build_component(
-        name="shipping",
-        label="Shipment Activity",
-        weight=settings.scoring_weight_shipping,
-        result=shipping_result,
-        threshold=threshold,
-        score_key="score",
-        confidence_key="confidence"
-    )
-    components.append(ship_component)
-    if ship_component.status == ComponentStatus.OK:
-        available_weights += ship_component.weight
-        weighted_sum += ship_component.weight * ship_component.score
+    for name, label, weight, result in component_specs:
+        component = _build_component(
+            name=name,
+            label=label,
+            weight=weight,
+            result=result,
+            threshold=threshold,
+        )
+        components.append(component)
+        if component.status == ComponentStatus.OK:
+            available_weights += component.weight
+            weighted_sum += component.weight * component.score
 
     # Check if all components are insufficient
     all_insufficient = all(
@@ -125,14 +98,13 @@ def _build_component(
     weight: float,
     result: dict,
     threshold: float,
-    score_key: str = "score",
-    confidence_key: str = "confidence"
 ) -> ComponentResult:
-    score = result.get(score_key)
-    confidence = result.get(confidence_key)
+    score = result.get("score")
+    confidence = result.get("confidence")
     rationale = result.get("rationale", "")
     observations = result.get("observations", [])
     risk_indicators = result.get("risk_indicators", [])
+    extracted_claims = result.get("extracted_claims", [])
 
     if score is None or confidence is None:
         return ComponentResult(
@@ -144,7 +116,8 @@ def _build_component(
             confidence=None,
             rationale=rationale or "Insufficient data for this component.",
             observations=observations,
-            risk_indicators=risk_indicators
+            risk_indicators=risk_indicators,
+            extracted_claims=extracted_claims,
         )
 
     if confidence < threshold:
@@ -157,7 +130,8 @@ def _build_component(
             confidence=confidence,
             rationale=f"Confidence ({confidence:.2f}) below threshold ({threshold}). Data insufficient.",
             observations=observations,
-            risk_indicators=risk_indicators
+            risk_indicators=risk_indicators,
+            extracted_claims=extracted_claims,
         )
 
     return ComponentResult(
@@ -169,7 +143,8 @@ def _build_component(
         confidence=confidence,
         rationale=rationale,
         observations=observations,
-        risk_indicators=risk_indicators
+        risk_indicators=risk_indicators,
+        extracted_claims=extracted_claims,
     )
 
 

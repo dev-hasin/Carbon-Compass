@@ -1,17 +1,10 @@
 import { useState } from 'react';
+import { SECTORS } from '../utils/risk';
 
 interface SearchBoxProps {
   onSubmit: (query: string, sector: string) => void;
   isLoading: boolean;
 }
-
-const SECTORS = [
-  { value: '', label: 'Any sector' },
-  { value: 'textile', label: 'Textile' },
-  { value: 'leather', label: 'Leather' },
-  { value: 'manufacturing', label: 'Manufacturing' },
-  { value: 'mixed', label: 'Mixed' },
-];
 
 export default function SearchBox({ onSubmit, isLoading }: SearchBoxProps) {
   const [query, setQuery] = useState('');
@@ -30,7 +23,7 @@ export default function SearchBox({ onSubmit, isLoading }: SearchBoxProps) {
         <div className="flex-1 relative">
           <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
             <svg
-              className="w-5 h-5 text-stone-400 dark:text-stone-500"
+              className="w-5 h-5 text-slate-500"
               fill="none"
               viewBox="0 0 24 24"
               stroke="currentColor"
@@ -44,16 +37,16 @@ export default function SearchBox({ onSubmit, isLoading }: SearchBoxProps) {
             type="text"
             value={query}
             onChange={(e) => setQuery(e.target.value)}
-            placeholder="Company name, address, or GPS coordinates (e.g. 31.42, 73.08)"
-            className="w-full pl-11 pr-4 py-3.5 rounded-xl border border-stone-300 dark:border-emerald-800 bg-white dark:bg-forest-900 text-stone-900 dark:text-stone-100 placeholder-stone-400 dark:placeholder-stone-500 focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent text-sm shadow-sm"
+            placeholder="Company Name, Facility, or GPS coordinates..."
             disabled={isLoading}
+            className="w-full pl-11 pr-4 py-3.5 rounded-xl border border-carbon-600 bg-carbon-850 text-slate-100 placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-accent/60 focus:border-accent/60 text-sm shadow-card"
           />
         </div>
 
         <select
           value={sector}
           onChange={(e) => setSector(e.target.value)}
-          className="px-4 py-3.5 rounded-xl border border-stone-300 dark:border-emerald-800 bg-white dark:bg-forest-900 text-stone-700 dark:text-stone-300 text-sm focus:outline-none focus:ring-2 focus:ring-teal-500 shadow-sm min-w-[140px]"
+          className="px-4 py-3.5 rounded-xl border border-carbon-600 bg-carbon-850 text-slate-300 text-sm focus:outline-none focus:ring-2 focus:ring-accent/60 shadow-card min-w-[150px]"
           disabled={isLoading}
         >
           {SECTORS.map((s) => (
@@ -66,7 +59,7 @@ export default function SearchBox({ onSubmit, isLoading }: SearchBoxProps) {
         <button
           type="submit"
           disabled={!query.trim() || isLoading}
-          className="px-6 py-3.5 rounded-xl bg-gradient-to-r from-teal-500 to-teal-600 hover:from-teal-600 hover:to-teal-700 disabled:from-stone-300 disabled:to-stone-400 dark:disabled:from-stone-700 dark:disabled:to-stone-800 text-white font-semibold text-sm shadow-sm hover:shadow-md disabled:shadow-none transition-all duration-200 flex items-center justify-center gap-2 min-w-[160px]"
+          className="px-6 py-3.5 rounded-xl bg-accent text-carbon-900 font-semibold text-sm shadow-glow hover:bg-accent-soft disabled:bg-carbon-600 disabled:text-slate-400 disabled:shadow-none transition-all flex items-center justify-center gap-2 min-w-[150px]"
         >
           {isLoading ? (
             <>
@@ -78,14 +71,17 @@ export default function SearchBox({ onSubmit, isLoading }: SearchBoxProps) {
             </>
           ) : (
             <>
-              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
-                <path d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l5.447 2.724A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7" />
+              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2.2">
+                <path d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.196 5.196a7.5 7.5 0 0010.607 10.607z" />
               </svg>
-              Analyze Facility
+              Analyze Risk
             </>
           )}
         </button>
       </div>
+      <p className="mt-2.5 text-center text-xs text-slate-600">
+        e.g., Faisalabad Textile Hub, 31.42, 73.08
+      </p>
     </form>
   );
 }

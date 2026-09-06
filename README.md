@@ -6,12 +6,21 @@ Carbon Compass is an AI-powered supply chain sustainability risk platform built 
 
 ![Landing Page](docs/screenshots/landing-page.png)
 
-![Dashboard](docs/screenshots/dashboard-page.png)
+![Dashboard — pin view](docs/screenshots/dashboard-page.png)
+
+![Dashboard — Sustainability Heatmap](docs/screenshots/dashboard-map.png)
+
+![Facility Detail](docs/screenshots/facility-detail.png)
+
+![Forensic Report](docs/screenshots/report-page.png)
+
+![Methodology](docs/screenshots/methodology-page.png)
 
 ---
 
 ## Table of Contents
 
+- [Project Status](#project-status)
 - [What It Does](#what-it-does)
 - [Key Features](#key-features)
 - [Architecture](#architecture)
@@ -28,6 +37,12 @@ Carbon Compass is an AI-powered supply chain sustainability risk platform built 
 - [Known Limitations](#known-limitations)
 
 ---
+
+## Project Status
+
+**All Must-Have and Should-Have SRS requirements (FR-1 to FR-15, FR-17, FR-18) are implemented and verified.** Phases 0–5 of the build plan are complete; Phase 6 (rehearsal and submission) is in progress. The only unimplemented requirement is FR-16 (historical time-lapse slider), which is a Could-Have stretch feature.
+
+For the full requirement-by-requirement status — what is done, what is partial, and what remains — see **[files/STATUS.md](files/STATUS.md)**. After cloning, that file also has a copy-paste Quick Start (the app runs in mock mode with zero API keys).
 
 ## What It Does
 
@@ -52,11 +67,13 @@ A user enters a **company name, address, or GPS coordinates** for a facility. Ca
 - **ESG Disclosure Scanning** — cross-check public sustainability claims against physical evidence
 - **Risk Scoring (0–100)** — weighted aggregation (40% satellite / 40% disclosure / 20% shipping) with confidence guardrails
 - **Confidence Guard** — any component below the confidence threshold returns **Insufficient Data**, never a fabricated score
-- **Interactive Dashboard** — Leaflet map with colour-coded pins (green/amber/red/grey) and sector filtering
-- **Facility Detail Panel** — score breakdown, satellite preview, extracted claims, risk signals, plain-language rationale, and data-source citations
-- **PDF Report Export** — shareable report with the full legal disclaimer block
+- **Progressive Analysis Screen** — live Server-Sent-Events pipeline progress: each stage (geocode → satellite → disclosure scan → AI cross-analysis → scoring) renders as it completes, with elapsed timer and satellite preview
+- **Interactive Dashboard** — Leaflet map with labelled colour-coded pins (green/amber/red/grey), **Sustainability Heatmap** toggle (FR-13), sector/region/risk-band filters, metric cards, and a Monitored Exporters registry with CSV export
+- **Facility Detail Panel** — score breakdown, annotated satellite preview, extracted claims vs. evidence discrepancy table, risk signals, plain-language rationale, and data-source citations
+- **Forensic Report Screen** — shareable report page (copy link / print / PDF) with executive summary, weighted score breakdown, discrepancy audit, citations, and disclaimer
+- **Methodology Page** — transparent scoring formula, confidence model, pipeline stages, and data sources
+- **PDF Report Export** — server-generated report with the full legal disclaimer block
 - **Demo Dataset** — 4 pre-seeded facilities covering all risk scenarios, including an intentional insufficient-data case
-- **Light/Dark Theme** — respects `prefers-color-scheme`, toggleable in the header
 - **Responsive Design** — works on desktop, laptop, tablet, and mobile
 - **Mock Mode** — the full app runs without any API keys for demos
 
@@ -100,7 +117,7 @@ Carbon Compass follows a **three-layer pipeline**. Each layer **degrades gracefu
 |-------|-----------|
 | Frontend | React 18 + Vite + TypeScript + Tailwind CSS |
 | Routing | React Router v6 |
-| Map / Heatmap | Leaflet (react-leaflet) |
+| Map / Heatmap | Leaflet (react-leaflet) + leaflet.heat |
 | HTTP Client | Axios |
 | Backend | FastAPI (Python) + Pydantic schemas |
 | Geocoding | OpenCage Geocoder (mock fallback) |
@@ -117,20 +134,24 @@ Carbon Compass follows a **three-layer pipeline**. Each layer **degrades gracefu
 carbon-compass/
 ├── frontend/              React + Vite + Tailwind + Leaflet
 │   └── src/
-│       ├── pages/         LandingPage, DashboardPage, FacilityDetailPage
-│       ├── components/    AppHeader, FacilityMap, RiskBadge, SearchBox
-│       ├── context/       ThemeContext (light/dark)
-│       ├── types/         TypeScript interfaces
-│       └── api.ts         Typed API client
+│       ├── pages/         LandingPage, AnalysisPage, DashboardPage,
+│       │                  FacilityDetailPage, ReportPage, MethodologyPage
+│       ├── components/    AppHeader, SearchBox, FacilityMap, RiskBadge,
+│       │                  ScoreBar, SatelliteImage, DiscrepancyTable,
+│       │                  MetricCard, DisclaimerBanner
+│       ├── utils/         risk (bands, sectors, claim matching), format (dates, citations, CSV)
+│       ├── types/         TypeScript interfaces + leaflet.heat declarations
+│       └── api.ts         Typed API client + SSE stream reader
 ├── backend/               FastAPI + Pydantic
 │   └── app/
-│       ├── api/v1/        REST routes
+│       ├── api/v1/        REST + SSE routes
 │       ├── services/      geocoding, satellite, scraper, qwen, shipping,
 │       │                  scoring, storage, report (PDF), demo (seed)
 │       ├── core/          config, settings
 │       └── schemas/       Pydantic request/response models
 ├── data/                  Local cache (analyses JSON, satellite images)
-├── docs/                  ENV_SETUP.md, screenshots, spec
+├── docs/                  ENV_SETUP.md, screenshots
+├── files/                 Project documentation set (PRD, architecture, phases, ...)
 └── scripts/               test.ps1 (E2E smoke tests)
 ```
 
@@ -146,6 +167,9 @@ carbon-compass/
 
 ```bash
 cd backend
+python -m venv .venv
+# Windows:              .\.venv\Scripts\activate
+# macOS / Linux:        source .venv/bin/activate
 pip install -r requirements.txt
 
 # Configure environment (optional — mock mode works without keys)
@@ -213,12 +237,21 @@ All keys are stored **server-side only** — never in the React bundle or git. S
 |--------|------|-------------|
 | `GET` | `/api/v1/health` | Health check + configuration status (which APIs are live vs mock) |
 | `POST` | `/api/v1/facilities/analyze` | Full analysis pipeline (geocode → ingest → analyse → score) |
-| `GET` | `/api/v1/facilities` | List all cached analyses |
+| `POST` | `/api/v1/facilities/analyze/stream` | Same pipeline as Server-Sent Events for progressive rendering |
+| `GET` | `/api/v1/facilities` | List all cached analyses (optional `?sector=` filter) |
 | `GET` | `/api/v1/facilities/{id}` | Single analysis detail |
 | `GET` | `/api/v1/facilities/{id}/report.pdf` | Export PDF report |
-| `GET` | `/api/v1/heatmap` | Map pins for dashboard (coordinates + risk band) |
 | `POST` | `/api/v1/admin/seed-demo` | Load the pre-built demo dataset |
 | `GET` | `/api/v1/satellite/image/{filename}` | Satellite image preview |
+
+**SSE event stream** (`text/event-stream`, one JSON payload per `data:` frame):
+
+```
+data: {"type": "stage", "stage": "geocoding_satellite", "status": "running", "detail": "..."}
+data: {"type": "stage", "stage": "risk_scoring", "status": "completed", "detail": "..."}
+data: {"type": "complete", "analysis": { ...full FacilityAnalysis... }}
+data: {"type": "error", "error": "..."}
+```
 
 Interactive Swagger docs are available at `/docs`.
 
@@ -305,7 +338,7 @@ An end-to-end smoke test script is included:
 .\scripts\test.ps1
 ```
 
-It verifies: health check, demo seeding, facility listing, heatmap population, the insufficient-data guard (no fabricated score), PDF export, and a live analysis run.
+It verifies: health check, demo seeding, facility listing, the insufficient-data guard (no fabricated score), PDF export, the JSON analysis pipeline, and the SSE streaming endpoint (progressive rendering).
 
 ## Legal & Ethical Guardrails
 
