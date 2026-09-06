@@ -91,12 +91,65 @@ function HeatLayer({ facilities }: { facilities: FacilityAnalysis[] }) {
   return null;
 }
 
+function HeatmapLayer({
+  points,
+  visible,
+}: {
+  points: HeatmapPoint[];
+  visible: boolean;
+}) {
+  const map = useMap();
+  const layerRef = useRef<L.Layer | null>(null);
+
+  useEffect(() => {
+    if (!map) return;
+
+    if (layerRef.current) {
+      map.removeLayer(layerRef.current);
+      layerRef.current = null;
+    }
+
+    if (!visible || points.length === 0) return;
+
+    const heatData: [number, number, number][] = points
+      .filter((p) => p.risk_score != null)
+      .map((p) => [p.latitude, p.longitude, (p.risk_score ?? 0) / 100]);
+
+    const layer = L.heatLayer(heatData, {
+      radius: 30,
+      blur: 25,
+      maxZoom: 18,
+      minOpacity: 0.35,
+      gradient: {
+        0.0: '#22C55E',
+        0.3: '#84CC16',
+        0.5: '#F59E0B',
+        0.7: '#F97316',
+        1.0: '#EF4444',
+      },
+    });
+
+    layer.addTo(map);
+    layerRef.current = layer;
+
+    return () => {
+      if (layerRef.current) {
+        map.removeLayer(layerRef.current);
+        layerRef.current = null;
+      }
+    };
+  }, [map, points, visible]);
+
+  return null;
+}
+
 export default function FacilityMap({
   facilities,
   mode = 'pins',
   className = '',
 }: FacilityMapProps) {
   const navigate = useNavigate();
+  const [showHeatmap, setShowHeatmap] = useState(false);
 
   return (
     <div

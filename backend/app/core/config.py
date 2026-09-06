@@ -10,11 +10,16 @@ class Settings(BaseSettings):
     sentinel_hub_client_secret: Optional[str] = ""
     qwen_api_key: Optional[str] = ""
 
-    # Alibaba OSS
+    # Alibaba OSS (legacy — unused, kept for compatibility)
     alibaba_oss_access_key_id: Optional[str] = ""
     alibaba_oss_access_key_secret: Optional[str] = ""
     alibaba_oss_bucket_name: Optional[str] = ""
     alibaba_oss_endpoint: Optional[str] = ""
+
+    # Supabase Storage
+    supabase_url: Optional[str] = ""
+    supabase_anon_key: Optional[str] = ""
+    supabase_bucket: str = "carbon-compass"
 
     # Scoring
     confidence_threshold: float = 0.5
@@ -51,6 +56,10 @@ class Settings(BaseSettings):
     @property
     def has_oss(self) -> bool:
         return bool(self.alibaba_oss_access_key_id and self.alibaba_oss_bucket_name)
+
+    @property
+    def has_supabase(self) -> bool:
+        return bool(self.supabase_url and self.supabase_anon_key)
 
     @property
     def cors_origin_list(self):

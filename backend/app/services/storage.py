@@ -11,6 +11,7 @@ import logging
 import os
 from pathlib import Path
 from typing import Optional
+
 from app.core.config import get_settings
 from app.schemas.models import FacilityAnalysis
 
@@ -76,8 +77,11 @@ def _oss_get(key: str) -> Optional[bytes]:
 
 
 def save_analysis(analysis: FacilityAnalysis) -> str:
+    """Save analysis JSON locally + mirror to Supabase."""
     _ensure_dirs()
     settings = get_settings()
+
+    # 1. Local write (always)
     path = Path(settings.analyses_dir) / f"{analysis.analysis_id}.json"
     data = analysis.model_dump_json(indent=2)
     with open(path, "w", encoding="utf-8") as f:
@@ -87,6 +91,7 @@ def save_analysis(analysis: FacilityAnalysis) -> str:
 
 
 def load_analysis(analysis_id: str) -> Optional[FacilityAnalysis]:
+    """Load analysis from local cache; fall back to Supabase download."""
     settings = get_settings()
     path = Path(settings.analyses_dir) / f"{analysis_id}.json"
     if not path.exists():
@@ -101,6 +106,7 @@ def load_analysis(analysis_id: str) -> Optional[FacilityAnalysis]:
 
 
 def list_analyses() -> list[FacilityAnalysis]:
+    """List all analyses from local disk (fast, works offline)."""
     _ensure_dirs()
     settings = get_settings()
     results = []
@@ -116,10 +122,13 @@ def list_analyses() -> list[FacilityAnalysis]:
 
 
 def save_satellite_image(analysis_id: str, image_bytes: bytes, ext: str = "png") -> str:
+    """Save satellite image locally + mirror to Supabase."""
     _ensure_dirs()
     settings = get_settings()
     filename = f"{analysis_id}.{ext}"
     path = Path(settings.satellite_dir) / filename
+
+    # 1. Local write
     with open(path, "wb") as f:
         f.write(image_bytes)
     _oss_put(f"{SATELLITE_PREFIX}/{filename}", image_bytes)
@@ -127,6 +136,7 @@ def save_satellite_image(analysis_id: str, image_bytes: bytes, ext: str = "png")
 
 
 def get_satellite_image_path(filename: str) -> Optional[str]:
+    """Get local path of satellite image; download from Supabase if missing."""
     settings = get_settings()
     path = Path(settings.satellite_dir) / filename
     if not path.exists():

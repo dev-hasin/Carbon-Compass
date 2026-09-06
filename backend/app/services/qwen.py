@@ -7,6 +7,28 @@ from app.core.config import get_settings
 logger = logging.getLogger(__name__)
 
 
+def _insufficient_vision() -> dict:
+    """Return when vision analysis cannot produce a result."""
+    return {
+        "observations": [],
+        "risk_indicators": [],
+        "score": None,
+        "confidence": None,
+        "rationale": "Satellite image analysis could not be completed. Imagery may be unavailable or insufficient for AI interpretation."
+    }
+
+
+def _insufficient_text() -> dict:
+    """Return when text analysis cannot produce a result."""
+    return {
+        "extracted_claims": [],
+        "discrepancies": [],
+        "score": None,
+        "confidence": None,
+        "rationale": "ESG disclosure analysis could not be completed. Public disclosures may be unavailable or insufficient."
+    }
+
+
 async def analyze_satellite_image(
     image_bytes: bytes,
     company_name: str,
@@ -14,7 +36,7 @@ async def analyze_satellite_image(
 ) -> dict:
     settings = get_settings()
     if not settings.has_qwen:
-        return _mock_vision_analysis(company_name, sector)
+        return _insufficient_vision()
 
     try:
         b64_image = base64.b64encode(image_bytes).decode("utf-8")
@@ -56,7 +78,7 @@ Return JSON with:
 
     except Exception as e:
         logger.error(f"Qwen vision analysis error: {e}")
-        return _mock_vision_analysis(company_name, sector)
+        return _insufficient_vision()
 
 
 async def analyze_text_disclosures(
@@ -66,7 +88,7 @@ async def analyze_text_disclosures(
 ) -> dict:
     settings = get_settings()
     if not settings.has_qwen:
-        return _mock_text_analysis(company_name, sector)
+        return _insufficient_text()
 
     try:
         prompt = f"""Analyze these ESG/sustainability disclosures for a {sector} facility in Pakistan.
@@ -106,7 +128,7 @@ Important: Frame findings as risk signals, never as confirmed violations. Use la
 
     except Exception as e:
         logger.error(f"Qwen text analysis error: {e}")
-        return _mock_text_analysis(company_name, sector)
+        return _insufficient_text()
 
 
 async def detect_discrepancies(
@@ -116,7 +138,7 @@ async def detect_discrepancies(
 ) -> list[str]:
     settings = get_settings()
     if not settings.has_qwen:
-        return _mock_discrepancies(vision_result, text_result)
+        return _rule_based_signals(vision_result, text_result)
 
     try:
         prompt = f"""Compare satellite observations against ESG disclosure claims for {company_name}.
@@ -146,11 +168,13 @@ Return JSON array of risk signal strings."""
             result = resp.json()
             content = result["choices"][0]["message"]["content"]
             signals = _parse_json_array(content)
-            return signals if signals else _mock_discrepancies(vision_result, text_result)
+            if signals:
+                return signals
+            return _rule_based_signals(vision_result, text_result)
 
     except Exception as e:
         logger.error(f"Qwen discrepancy detection error: {e}")
-        return _mock_discrepancies(vision_result, text_result)
+        return _rule_based_signals(vision_result, text_result)
 
 
 def _parse_json_response(content: str) -> dict:
@@ -181,123 +205,39 @@ def _parse_json_array(content: str) -> list:
 
 
 def _validate_vision_result(result: dict) -> dict:
-    if not result:
-        return _mock_vision_analysis("unknown", "mixed")
+    if not result or "score" not in result:
+        return _insufficient_vision()
+    score = result.get("score")
+    confidence = result.get("confidence")
+    if score is None or confidence is None:
+        return _insufficient_vision()
     return {
         "observations": result.get("observations", []),
         "risk_indicators": result.get("risk_indicators", []),
-        "score": min(100, max(0, int(result.get("score", 50)))),
-        "confidence": min(1.0, max(0.0, float(result.get("confidence", 0.5)))),
+        "score": min(100, max(0, int(score))),
+        "confidence": min(1.0, max(0.0, float(confidence))),
         "rationale": result.get("rationale", "Analysis completed.")
     }
 
 
 def _validate_text_result(result: dict) -> dict:
-    if not result:
-        return _mock_text_analysis("unknown", "mixed")
+    if not result or "score" not in result:
+        return _insufficient_text()
+    score = result.get("score")
+    confidence = result.get("confidence")
+    if score is None or confidence is None:
+        return _insufficient_text()
     return {
         "extracted_claims": result.get("extracted_claims", []),
         "discrepancies": result.get("discrepancies", []),
-        "score": min(100, max(0, int(result.get("score", 50)))),
-        "confidence": min(1.0, max(0.0, float(result.get("confidence", 0.5)))),
+        "score": min(100, max(0, int(score))),
+        "confidence": min(1.0, max(0.0, float(confidence))),
         "rationale": result.get("rationale", "Analysis completed.")
     }
 
 
-def _mock_vision_analysis(company_name: str, sector: str) -> dict:
-    mock_data = {
-        "textile": {
-            "observations": [
-                "Observable industrial land-use patterns near facility boundary",
-                "Multiple building structures visible with varying roof conditions",
-                "Adjacent waterway with slight discoloration near discharge point"
-            ],
-            "risk_indicators": [
-                "Observable signal suggests follow-up on water management practices",
-                "Land-use density consistent with active industrial operations"
-            ],
-            "score": 52,
-            "confidence": 0.72,
-            "rationale": "Observable land-use patterns and water features near facility boundary suggest moderate risk signals requiring further investigation."
-        },
-        "leather": {
-            "observations": [
-                "Dense industrial clustering visible in satellite view",
-                "Areas of ground discoloration consistent with tannery operations",
-                "Visible drainage channels leading toward waterway"
-            ],
-            "risk_indicators": [
-                "Risk signal: Observable ground staining patterns suggest effluent management review needed",
-                "Risk signal: Proximity of industrial drainage to waterway suggests follow-up"
-            ],
-            "score": 68,
-            "confidence": 0.68,
-            "rationale": "Observable surface features and drainage patterns indicate elevated risk signals consistent with leather processing activities."
-        },
-        "manufacturing": {
-            "observations": [
-                "Well-organized industrial facility with maintained grounds",
-                "Solar panel arrays visible on rooftops",
-                "Clear boundary between industrial and green buffer zones"
-            ],
-            "risk_indicators": [
-                "Low observable risk — facility appears well-maintained from satellite perspective"
-            ],
-            "score": 22,
-            "confidence": 0.78,
-            "rationale": "Observable facility conditions suggest good environmental management practices. Solar infrastructure visible."
-        }
-    }
-    return mock_data.get(sector, mock_data["textile"])
-
-
-def _mock_text_analysis(company_name: str, sector: str) -> dict:
-    mock_data = {
-        "textile": {
-            "extracted_claims": [
-                "Company targets 15% renewable energy mix by 2025",
-                "Water treatment facility operational since 2022",
-                "Waste management practices referenced in annual report"
-            ],
-            "discrepancies": [
-                "Risk signal: Renewable energy claim lacks third-party verification in public text",
-                "Suggested follow-up: Water treatment efficacy metrics not disclosed"
-            ],
-            "score": 48,
-            "confidence": 0.65,
-            "rationale": "Renewable energy claim lacks third-party verification in public text. Water management claims partially substantiated."
-        },
-        "leather": {
-            "extracted_claims": [
-                "Chromium management protocols documented",
-                "Effluent treatment plant mentioned in press releases"
-            ],
-            "discrepancies": [
-                "Risk signal: Independent verification of chromium management not found",
-                "Risk signal: No stated renewable energy transition plan"
-            ],
-            "score": 65,
-            "confidence": 0.60,
-            "rationale": "Limited public disclosure with significant gaps in environmental verification. Energy source primarily undisclosed."
-        },
-        "manufacturing": {
-            "extracted_claims": [
-                "ISO 14001 certification referenced in annual report",
-                "Solar panel installation for rooftop power generation announced",
-                "Waste reduction targets stated with specific metrics"
-            ],
-            "discrepancies": [
-                "Suggested follow-up: ISO certification body not specified"
-            ],
-            "score": 18,
-            "confidence": 0.80,
-            "rationale": "Strong disclosure with specific metrics and certifications referenced. Minor gap in verification body identification."
-        }
-    }
-    return mock_data.get(sector, mock_data["textile"])
-
-
-def _mock_discrepancies(vision_result: dict, text_result: dict) -> list[str]:
+def _rule_based_signals(vision_result: dict, text_result: dict) -> list[str]:
+    """Simple rule-based discrepancy detection as a fallback when Qwen is unavailable."""
     signals = []
     observations = vision_result.get("observations", [])
     claims = text_result.get("extracted_claims", [])
