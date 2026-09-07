@@ -2,15 +2,23 @@ from pydantic_settings import BaseSettings
 from functools import lru_cache
 from typing import Optional
 
+# Known development placeholder — treated as "not configured" by the security layer.
+DEFAULT_AUTH_SECRET = "carbon-compass-dev-secret-change-me"
+
 
 class Settings(BaseSettings):
     # API Keys
     geocoding_api_key: Optional[str] = ""
     sentinel_hub_client_id: Optional[str] = ""
     sentinel_hub_client_secret: Optional[str] = ""
+    # Alibaba Cloud Model Studio (Qwen) — any OpenAI-compatible endpoint works
     qwen_api_key: Optional[str] = ""
+    qwen_base_url: str = "https://dashscope.aliyuncs.com/compatible-mode/v1"
+    qwen_text_model: str = "qwen-max"
+    qwen_vision_model: str = "qwen-vl-max"
 
-    # Alibaba OSS (legacy — unused, kept for compatibility)
+    # Durable storage: Supabase Storage (preferred) or Alibaba Cloud OSS (legacy
+    # fallback). Unset → local filesystem cache only.
     alibaba_oss_access_key_id: Optional[str] = ""
     alibaba_oss_access_key_secret: Optional[str] = ""
     alibaba_oss_bucket_name: Optional[str] = ""
@@ -31,10 +39,21 @@ class Settings(BaseSettings):
     backend_port: int = 8000
     cors_origins: str = "http://localhost:5173,http://localhost:5174"
 
+    # Auth — signed tokens (HMAC), single admin seeded on startup.
+    # When AUTH_SECRET is left at the default, a random secret is generated once
+    # and persisted to auth_secret_file so tokens can never be forged with the
+    # known default value.
+    auth_secret: str = DEFAULT_AUTH_SECRET
+    auth_secret_file: str = "../data/auth_secret.key"
+    auth_token_expiry_hours: int = 12
+    admin_email: str = "admin@carbon-compass.local"
+    admin_password: str = "admin123"
+
     # Paths
     data_dir: str = "../data"
     analyses_dir: str = "../data/analyses"
     satellite_dir: str = "../data/satellite"
+    users_file: str = "../data/users.json"
 
     class Config:
         env_file = ".env"

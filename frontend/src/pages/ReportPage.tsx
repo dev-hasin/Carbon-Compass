@@ -3,7 +3,7 @@ import { Link, useParams } from 'react-router-dom';
 import ScoreBar from '../components/ScoreBar';
 import DiscrepancyTable from '../components/DiscrepancyTable';
 import DisclaimerBanner from '../components/DisclaimerBanner';
-import { getFacility, getReportPdfUrl } from '../api';
+import { getFacility, downloadReportPdf } from '../api';
 import type { FacilityAnalysis, RiskBand } from '../types';
 import { BAND_HEX } from '../utils/risk';
 import { buildCitations, formatConfidence, formatDate } from '../utils/format';
@@ -91,7 +91,6 @@ export default function ReportPage() {
   const bandColor = BAND_HEX[facility.risk_band];
   const hasScore = facility.risk_score !== null;
   const citations = buildCitations(facility);
-  const pdfUrl = getReportPdfUrl(facility.analysis_id);
 
   return (
     <div className="min-h-[calc(100vh-4rem)]">
@@ -107,35 +106,34 @@ export default function ReportPage() {
             <span>/</span>
             <span className="text-slate-300">Forensic Report</span>
           </nav>
-          <div className="flex items-center gap-3">
+          <div className="flex flex-wrap items-center gap-3">
             <button
               onClick={shareLink}
-              className="px-4 py-2.5 rounded-lg border border-carbon-600 text-sm font-medium text-slate-300 hover:border-accent/50 hover:text-accent transition-colors"
+              className="px-4 py-2.5 rounded-lg border border-carbon-600 text-sm font-medium text-slate-300 hover:border-accent/50 hover:text-accent transition-colors btn-3d-ghost"
             >
               {copied ? 'Link Copied!' : 'Share Link'}
             </button>
             <button
               onClick={() => window.print()}
-              className="px-4 py-2.5 rounded-lg border border-carbon-600 text-sm font-medium text-slate-300 hover:border-accent/50 hover:text-accent transition-colors"
+              className="px-4 py-2.5 rounded-lg border border-carbon-600 text-sm font-medium text-slate-300 hover:border-accent/50 hover:text-accent transition-colors btn-3d-ghost"
             >
               Print
             </button>
-            <a
-              href={pdfUrl}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="inline-flex items-center gap-2 px-5 py-2.5 rounded-lg bg-accent text-carbon-900 text-sm font-semibold hover:bg-accent-soft transition-colors shadow-glow"
+            <button
+              type="button"
+              onClick={() => downloadReportPdf(facility.analysis_id)}
+              className="inline-flex items-center gap-2 px-5 py-2.5 rounded-lg bg-accent text-carbon-900 text-sm font-semibold hover:bg-accent-soft transition-colors shadow-glow btn-3d"
             >
               <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
                 <path d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5M16.5 12L12 16.5m0 0L7.5 12m4.5 4.5V3" />
               </svg>
               Download Forensic PDF
-            </a>
+            </button>
           </div>
         </div>
 
         {/* Report document */}
-        <article className="rounded-xl border border-carbon-700 bg-carbon-850 p-6 sm:p-8 shadow-card print-plain">
+        <article className="rounded-xl border border-carbon-700 bg-carbon-850 p-6 sm:p-8 shadow-card print-plain animate-flip-in-x">
           {/* Masthead */}
           <header className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 pb-5 border-b border-carbon-700">
             <div className="flex items-center gap-3">
@@ -188,7 +186,7 @@ export default function ReportPage() {
             </h2>
             <div className="flex flex-col sm:flex-row gap-6">
               <div
-                className="flex-shrink-0 rounded-xl border-2 bg-carbon-800 px-6 py-5 text-center sm:w-52"
+                className="flex-shrink-0 rounded-xl border-2 bg-carbon-800 px-6 py-5 text-center sm:w-52 animate-scale-in perspective-800"
                 style={{ borderColor: bandColor }}
               >
                 <p className="text-5xl font-bold text-slate-100 leading-none">
@@ -200,7 +198,7 @@ export default function ReportPage() {
                 </p>
               </div>
 
-              <div className="min-w-0">
+              <div className="min-w-0 animate-fade-up" style={{ animationDelay: '150ms' }}>
                 <h3 className="text-sm font-semibold text-slate-100 mb-2">Executive Summary</h3>
                 <p className="text-xs text-slate-400 leading-relaxed">
                   {hasScore

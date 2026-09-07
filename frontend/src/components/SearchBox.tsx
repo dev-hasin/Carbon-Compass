@@ -39,7 +39,7 @@ export default function SearchBox({ onSubmit, isLoading }: SearchBoxProps) {
             onChange={(e) => setQuery(e.target.value)}
             placeholder="Company Name, Facility, or GPS coordinates..."
             disabled={isLoading}
-            className="w-full pl-11 pr-4 py-3.5 rounded-xl border border-carbon-600 bg-carbon-850 text-slate-100 placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-accent/60 focus:border-accent/60 text-sm shadow-card"
+            className="w-full pl-11 pr-4 py-3.5 rounded-xl border border-carbon-600 bg-carbon-850 text-slate-100 placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-accent/60 focus:border-accent/60 text-sm shadow-card transition-all duration-300 focus:shadow-glow"
           />
         </div>
 
@@ -59,7 +59,7 @@ export default function SearchBox({ onSubmit, isLoading }: SearchBoxProps) {
         <button
           type="submit"
           disabled={!query.trim() || isLoading}
-          className="px-6 py-3.5 rounded-xl bg-accent text-carbon-900 font-semibold text-sm shadow-glow hover:bg-accent-soft disabled:bg-carbon-600 disabled:text-slate-400 disabled:shadow-none transition-all flex items-center justify-center gap-2 min-w-[150px]"
+          className="px-6 py-3.5 rounded-xl bg-accent text-carbon-900 font-semibold text-sm shadow-glow hover:bg-accent-soft disabled:bg-carbon-600 disabled:text-slate-400 disabled:shadow-none transition-all flex items-center justify-center gap-2 min-w-[150px] btn-3d"
         >
           {isLoading ? (
             <>

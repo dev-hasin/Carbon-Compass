@@ -4,7 +4,7 @@ import L from 'leaflet';
 import 'leaflet.heat';
 import 'leaflet/dist/leaflet.css';
 import { useNavigate } from 'react-router-dom';
-import type { FacilityAnalysis } from '../types';
+import type { FacilityAnalysis, HeatmapPoint } from '../types';
 import { BAND_HEX, BAND_LABELS } from '../utils/risk';
 
 export type MapViewMode = 'pins' | 'heatmap';
@@ -13,6 +13,12 @@ interface FacilityMapProps {
   facilities: FacilityAnalysis[];
   mode?: MapViewMode;
   className?: string;
+  /**
+   * Aggregate pins from GET /api/v1/heatmap (SRS section 7). When provided,
+   * heatmap mode renders this unfiltered aggregate instead of the filtered
+   * registry view — matching FR-13's "aggregating analysed facilities" intent.
+   */
+  aggregatePoints?: HeatmapPoint[] | null;
 }
 
 /** Labeled pin chip: FACILITY NAME [score], colored by risk band. */
@@ -50,22 +56,8 @@ function FitBounds({ facilities }: { facilities: FacilityAnalysis[] }) {
 }
 
 /** Aggregated sustainability heatmap layer (SRS FR-13). */
-function HeatLayer({ facilities }: { facilities: FacilityAnalysis[] }) {
+function HeatLayer({ points }: { points: [number, number, number][] }) {
   const map = useMap();
-  const points = useMemo(
-    () =>
-      facilities
-        .filter((f) => f.risk_score !== null)
-        .map(
-          (f) =>
-            [f.latitude, f.longitude, (f.risk_score as number) / 100] as [
-              number,
-              number,
-              number
-            ]
-        ),
-    [facilities]
-  );
 
   useEffect(() => {
     if (points.length === 0) return;
@@ -91,65 +83,26 @@ function HeatLayer({ facilities }: { facilities: FacilityAnalysis[] }) {
   return null;
 }
 
-function HeatmapLayer({
-  points,
-  visible,
-}: {
-  points: HeatmapPoint[];
-  visible: boolean;
-}) {
-  const map = useMap();
-  const layerRef = useRef<L.Layer | null>(null);
-
-  useEffect(() => {
-    if (!map) return;
-
-    if (layerRef.current) {
-      map.removeLayer(layerRef.current);
-      layerRef.current = null;
-    }
-
-    if (!visible || points.length === 0) return;
-
-    const heatData: [number, number, number][] = points
-      .filter((p) => p.risk_score != null)
-      .map((p) => [p.latitude, p.longitude, (p.risk_score ?? 0) / 100]);
-
-    const layer = L.heatLayer(heatData, {
-      radius: 30,
-      blur: 25,
-      maxZoom: 18,
-      minOpacity: 0.35,
-      gradient: {
-        0.0: '#22C55E',
-        0.3: '#84CC16',
-        0.5: '#F59E0B',
-        0.7: '#F97316',
-        1.0: '#EF4444',
-      },
-    });
-
-    layer.addTo(map);
-    layerRef.current = layer;
-
-    return () => {
-      if (layerRef.current) {
-        map.removeLayer(layerRef.current);
-        layerRef.current = null;
-      }
-    };
-  }, [map, points, visible]);
-
-  return null;
-}
-
 export default function FacilityMap({
   facilities,
   mode = 'pins',
   className = '',
+  aggregatePoints = null,
 }: FacilityMapProps) {
   const navigate = useNavigate();
-  const [showHeatmap, setShowHeatmap] = useState(false);
+
+  // Heatmap mode prefers the aggregate /api/v1/heatmap pins; falls back to
+  // the (possibly filtered) facility list when the endpoint data is absent.
+  const heatPoints = useMemo<[number, number, number][]>(() => {
+    if (aggregatePoints && aggregatePoints.length > 0) {
+      return aggregatePoints
+        .filter((p) => p.risk_score !== null)
+        .map((p) => [p.latitude, p.longitude, (p.risk_score as number) / 100]);
+    }
+    return facilities
+      .filter((f) => f.risk_score !== null)
+      .map((f) => [f.latitude, f.longitude, (f.risk_score as number) / 100]);
+  }, [aggregatePoints, facilities]);
 
   return (
     <div
@@ -168,7 +121,7 @@ export default function FacilityMap({
 
         <FitBounds facilities={facilities} />
 
-        {mode === 'heatmap' && <HeatLayer facilities={facilities} />}
+        {mode === 'heatmap' && <HeatLayer points={heatPoints} />}
 
         {mode === 'pins' &&
           facilities.map((facility) => (
@@ -201,7 +154,9 @@ export default function FacilityMap({
       <div className="absolute top-3 right-3 z-[500] px-2.5 py-1.5 rounded-md bg-carbon-950/85 border border-carbon-600 backdrop-blur-sm pointer-events-none">
         <span className="text-[10px] font-bold tracking-widest text-slate-300">
           {mode === 'heatmap' ? 'SUSTAINABILITY HEATMAP' : 'FACILITY PINS'} ·{' '}
-          {facilities.length} FACILIT{facilities.length === 1 ? 'Y' : 'IES'}
+          {mode === 'heatmap' && aggregatePoints && aggregatePoints.length > 0
+            ? `${aggregatePoints.length} FACILIT${aggregatePoints.length === 1 ? 'Y' : 'IES'}`
+            : `${facilities.length} FACILIT${facilities.length === 1 ? 'Y' : 'IES'}`}
         </span>
       </div>
 

@@ -1,0 +1,69 @@
+{
+  "analysis_id": "cc-3142-7308-0282f5",
+  "company_name": "31.42, 73.08",
+  "display_name": "Location (31.4200, 73.0800)",
+  "latitude": 31.42,
+  "longitude": 73.08,
+  "sector": "textile",
+  "region": "Faisalabad, Pakistan",
+  "risk_score": null,
+  "risk_band": "unknown",
+  "overall_confidence": null,
+  "overall_status": "insufficient_data",
+  "components": [
+    {
+      "name": "satellite",
+      "label": "Satellite Signal",
+      "weight": 0.4,
+      "status": "insufficient_data",
+      "score": null,
+      "confidence": null,
+      "rationale": "Satellite image analysis could not be completed. Imagery may be unavailable or insufficient for AI interpretation.",
+      "observations": [],
+      "risk_indicators": [],
+      "extracted_claims": []
+    },
+    {
+      "name": "disclosure",
+      "label": "Disclosure Discrepancy",
+      "weight": 0.4,
+      "status": "insufficient_data",
+      "score": null,
+      "confidence": null,
+      "rationale": "ESG disclosure analysis could not be completed. Public disclosures may be unavailable or insufficient.",
+      "observations": [],
+      "risk_indicators": [],
+      "extracted_claims": []
+    },
+    {
+      "name": "shipping",
+      "label": "Shipment Activity",
+      "weight": 0.2,
+      "status": "insufficient_data",
+      "score": null,
+      "confidence": 0.45,
+      "rationale": "Confidence (0.45) below threshold (0.5). Data insufficient.",
+      "observations": [],
+      "risk_indicators": [],
+      "extracted_claims": []
+    }
+  ],
+  "risk_signals": [],
+  "rationale": "Insufficient data across all sources. No risk score can be computed.",
+  "image_reference": "cc-3142-7308-0282f5.png",
+  "acquisition_date": "2026-09-07",
+  "disclosure_sources": [
+    "https://amexgoldmining.com/",
+    "https://alison.legislature.state.al.us/code-of-alabama",
+    "http://www.example.com/",
+    "https://dps.psx.com.pk/company/TGL",
+    "https://seed.nih.gov/small-business-funding/small-business-program-basics/foreign-disclosure-and-risk-management/restricted-entity-search-tool",
+    "https://p.feedblitz.com/t3.asp"
+  ],
+  "missing_sources": [
+    "Satellite Signal",
+    "Disclosure Discrepancy",
+    "Shipment Activity"
+  ],
+  "analyzed_at": "2026-09-07T11:48:08.035513"
+}

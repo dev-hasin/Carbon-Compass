@@ -1,0 +1,82 @@
+{
+  "analysis_id": "cc-3142-7308-1aedb2",
+  "company_name": "31.42, 73.08",
+  "display_name": "Location (31.4200, 73.0800)",
+  "latitude": 31.42,
+  "longitude": 73.08,
+  "sector": "textile",
+  "region": "Faisalabad, Pakistan",
+  "risk_score": 50.0,
+  "risk_band": "medium",
+  "overall_confidence": 0.61,
+  "overall_status": "ok",
+  "components": [
+    {
+      "name": "satellite",
+      "label": "Satellite Signal",
+      "weight": 0.4,
+      "status": "ok",
+      "score": 52.0,
+      "confidence": 0.72,
+      "rationale": "Observable land-use patterns and water features near facility boundary suggest moderate risk signals requiring further investigation.",
+      "observations": [
+        "Observable industrial land-use patterns near facility boundary",
+        "Multiple building structures visible with varying roof conditions",
+        "Adjacent waterway with slight discoloration near discharge point"
+      ],
+      "risk_indicators": [
+        "Observable signal suggests follow-up on water management practices",
+        "Land-use density consistent with active industrial operations"
+      ],
+      "extracted_claims": []
+    },
+    {
+      "name": "disclosure",
+      "label": "Disclosure Discrepancy",
+      "weight": 0.4,
+      "status": "ok",
+      "score": 48.0,
+      "confidence": 0.65,
+      "rationale": "Renewable energy claim lacks third-party verification in public text. Water management claims partially substantiated.",
+      "observations": [],
+      "risk_indicators": [],
+      "extracted_claims": [
+        "Company targets 15% renewable energy mix by 2025",
+        "Water treatment facility operational since 2022",
+        "Waste management practices referenced in annual report"
+      ]
+    },
+    {
+      "name": "shipping",
+      "label": "Shipment Activity",
+      "weight": 0.2,
+      "status": "insufficient_data",
+      "score": null,
+      "confidence": 0.45,
+      "rationale": "Confidence (0.45) below threshold (0.5). Data insufficient.",
+      "observations": [],
+      "risk_indicators": [],
+      "extracted_claims": []
+    }
+  ],
+  "risk_signals": [
+    "Risk signal: Renewable energy claim lacks third-party verification in public text",
+    "Suggested follow-up: Water treatment efficacy metrics not disclosed",
+    "Risk signal: Observable satellite features warrant cross-referencing with stated environmental claims"
+  ],
+  "rationale": "Satellite Signal: Observable land-use patterns and water features near facility boundary suggest moderate risk signals requiring further investigation. Disclosure Discrepancy: Renewable energy claim lacks third-party verification in public text. Water management claims partially substantiated. Shipment Activity: Insufficient data — not included in score. Missing sources: Shipment Activity.",
+  "image_reference": "cc-3142-7308-1aedb2.png",
+  "acquisition_date": "2026-09-03",
+  "disclosure_sources": [
+    "https://verra.org/",
+    "https://www.perplexity.ai/",
+    "https://www.lightpollutionmap.info/",
+    "https://dps.psx.com.pk/company/FFL",
+    "https://sarmaaya.pk/stocks/PAEL",
+    "https://www.marketscreener.com/quote/stock/SUI-NORTHERN-GAS-PIPELINE-6492708/"
+  ],
+  "missing_sources": [
+    "Shipment Activity"
+  ],
+  "analyzed_at": "2026-09-03T13:14:31.581829"
+}

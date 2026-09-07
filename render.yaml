@@ -1,0 +1,60 @@
+# Render deployment blueprint — https://render.com/docs/blueprint-spec
+#
+# Deploy: Render Dashboard → New → Blueprint → select this repository.
+# Variables marked `sync: false` are secrets — Render prompts for them during
+# blueprint creation and they are never committed (values live in backend/.env
+# locally; generate AUTH_SECRET with: python -c "import secrets; print(secrets.token_urlsafe(48))").
+#
+# The free plan has an EPHEMERAL filesystem: every restart starts with an empty
+# data directory. The app handles this by restoring accounts and analyses from
+# Supabase Storage on boot (see main.py lifespan), so SUPABASE_* are required
+# for a durable deployment.
+services:
+  - type: web
+    name: carbon-compass-api
+    plan: free
+    runtime: python
+    rootDir: backend
+    buildCommand: pip install -r requirements.txt
+    startCommand: uvicorn main:app --host 0.0.0.0 --port $PORT
+    healthCheckPath: /api/v1/health
+    envVars:
+      - key: PYTHON_VERSION
+        value: "3.11.9"
+      # Ephemeral-disk-safe data paths (relative to backend/)
+      - key: ANALYSES_DIR
+        value: ./data/analyses
+      - key: SATELLITE_DIR
+        value: ./data/satellite
+      - key: USERS_FILE
+        value: ./data/users.json
+      - key: AUTH_SECRET_FILE
+        value: ./data/auth_secret.key
+      - key: SUPABASE_BUCKET
+        value: carbon-compass
+      # --- Secrets: prompted at blueprint creation, never committed ---
+      # Comma-separated list of allowed frontend origins,
+      # e.g. https://carbon-compass.vercel.app,http://localhost:5173
+      - key: CORS_ORIGINS
+        sync: false
+      - key: GEOCODING_API_KEY
+        sync: false
+      - key: SENTINEL_HUB_CLIENT_ID
+        sync: false
+      - key: SENTINEL_HUB_CLIENT_SECRET
+        sync: false
+      - key: QWEN_API_KEY
+        sync: false
+      # Durable storage — required so accounts/analyses survive restarts
+      - key: SUPABASE_URL
+        sync: false
+      - key: SUPABASE_ANON_KEY
+        sync: false
+      # Long random string; keeps sessions valid across restarts
+      - key: AUTH_SECRET
+        sync: false
+      # Single admin account credentials (seeded on first boot only)
+      - key: ADMIN_EMAIL
+        sync: false
+      - key: ADMIN_PASSWORD
+        sync: false

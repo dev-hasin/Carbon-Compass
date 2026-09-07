@@ -5,7 +5,7 @@ import ScoreBar from '../components/ScoreBar';
 import SatelliteImage from '../components/SatelliteImage';
 import DiscrepancyTable from '../components/DiscrepancyTable';
 import DisclaimerBanner from '../components/DisclaimerBanner';
-import { getFacility, getReportPdfUrl } from '../api';
+import { getFacility, downloadReportPdf } from '../api';
 import type { FacilityAnalysis } from '../types';
 import { componentOf, confidenceLabel } from '../utils/risk';
 import { formatConfidence, formatDate } from '../utils/format';
@@ -53,7 +53,6 @@ export default function FacilityDetailPage() {
   }
 
   const satellite = componentOf(facility, 'satellite');
-  const pdfUrl = getReportPdfUrl(facility.analysis_id);
 
   return (
     <div className="min-h-[calc(100vh-4rem)]">
@@ -67,29 +66,28 @@ export default function FacilityDetailPage() {
             <span>/</span>
             <span className="text-slate-300 truncate max-w-[240px]">{facility.display_name}</span>
           </nav>
-          <div className="flex items-center gap-3">
+          <div className="flex flex-wrap items-center gap-3">
             <Link
               to={`/report/${facility.analysis_id}`}
-              className="px-4 py-2.5 rounded-lg border border-carbon-600 text-sm font-medium text-slate-300 hover:border-accent/50 hover:text-accent transition-colors"
+              className="px-4 py-2.5 rounded-lg border border-carbon-600 text-sm font-medium text-slate-300 hover:border-accent/50 hover:text-accent transition-colors btn-3d-ghost"
             >
               View Report
             </Link>
-            <a
-              href={pdfUrl}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="inline-flex items-center gap-2 px-5 py-2.5 rounded-lg bg-accent text-carbon-900 text-sm font-semibold hover:bg-accent-soft transition-colors shadow-glow"
+            <button
+              type="button"
+              onClick={() => downloadReportPdf(facility.analysis_id)}
+              className="inline-flex items-center gap-2 px-5 py-2.5 rounded-lg bg-accent text-carbon-900 text-sm font-semibold hover:bg-accent-soft transition-colors shadow-glow btn-3d"
             >
               <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
                 <path d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5M16.5 12L12 16.5m0 0L7.5 12m4.5 4.5V3" />
               </svg>
               Export PDF Report
-            </a>
+            </button>
           </div>
         </div>
 
         {/* Hub summary */}
-        <div className="rounded-xl border border-carbon-700 bg-carbon-850 p-6 mb-6">
+        <div className="rounded-xl border border-carbon-700 bg-carbon-850 p-6 mb-6 animate-flip-in-x shadow-depth-1">
           <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-6">
             <div className="min-w-0">
               <h1 className="text-2xl font-bold text-slate-50">{facility.display_name}</h1>
@@ -133,27 +131,29 @@ export default function FacilityDetailPage() {
 
         {/* Satellite evidence + rationale */}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-6">
-          <div className="lg:col-span-2">
+          <div className="lg:col-span-2 animate-fade-up" style={{ animationDelay: '120ms' }}>
             <h2 className="text-sm font-semibold text-slate-100 mb-3 tracking-wide">
               Satellite Evidence — Observable Indicators
             </h2>
-            <SatelliteImage
-              imageReference={facility.image_reference}
-              acquisitionDate={facility.acquisition_date}
-              observations={satellite?.observations ?? []}
-              className="h-72"
-            />
+            <div className="group relative rounded-xl transition-transform duration-500 ease-out-expo hover:-translate-y-1">
+              <SatelliteImage
+                imageReference={facility.image_reference}
+                acquisitionDate={facility.acquisition_date}
+                observations={satellite?.observations ?? []}
+                className="h-72 shadow-depth-2 group-hover:shadow-depth-3 transition-shadow duration-500"
+              />
+            </div>
             <p className="text-[11px] text-slate-600 mt-2">
               Annotation boxes mark areas referenced by AI observations; positions are illustrative.
               Imagery shows observable features only — it does not measure emissions.
             </p>
           </div>
 
-          <div>
+          <div className="animate-fade-up" style={{ animationDelay: '240ms' }}>
             <h2 className="text-sm font-semibold text-slate-100 mb-3 tracking-wide">
               Compliance Risk Rationale
             </h2>
-            <div className="rounded-xl border border-carbon-700 bg-carbon-850 p-4 space-y-3 h-[calc(18rem+1.5rem)] overflow-y-auto">
+            <div className="rounded-xl border border-carbon-700 bg-carbon-850 p-4 space-y-3 lg:h-[calc(18rem+1.5rem)] overflow-y-auto hover:border-accent/30 transition-colors duration-500">
               {facility.risk_signals.length > 0 ? (
                 facility.risk_signals.map((signal, i) => (
                   <div key={i} className="flex items-start gap-2.5">
@@ -180,7 +180,7 @@ export default function FacilityDetailPage() {
         </div>
 
         {/* Risk score attributions */}
-        <div className="rounded-xl border border-carbon-700 bg-carbon-850 p-6 mb-6">
+        <div className="rounded-xl border border-carbon-700 bg-carbon-850 p-6 mb-6 animate-fade-up" style={{ animationDelay: '360ms' }}>
           <h2 className="text-sm font-semibold text-slate-100 mb-1 tracking-wide">
             Risk Score Attributions
           </h2>
@@ -189,14 +189,16 @@ export default function FacilityDetailPage() {
             layer is Insufficient Data.
           </p>
           <div className="space-y-6">
-            {facility.components.map((comp) => (
-              <ScoreBar key={comp.name} component={comp} />
+            {facility.components.map((comp, i) => (
+              <div key={comp.name} className="animate-fade-up" style={{ animationDelay: `${450 + i * 120}ms` }}>
+                <ScoreBar component={comp} />
+              </div>
             ))}
           </div>
         </div>
 
         {/* Discrepancy audit */}
-        <div className="mb-6">
+        <div className="mb-6 animate-fade-up" style={{ animationDelay: '480ms' }}>
           <h2 className="text-sm font-semibold text-slate-100 mb-3 tracking-wide">
             Discrepancy Audit: Self-Disclosure vs. Geo-Evidence
           </h2>
@@ -205,7 +207,7 @@ export default function FacilityDetailPage() {
 
         {/* Missing sources */}
         {facility.missing_sources.length > 0 && (
-          <div className="mb-6 rounded-xl border border-carbon-700 bg-carbon-850 p-4">
+          <div className="mb-6 rounded-xl border border-carbon-700 bg-carbon-850 p-4 animate-fade-up" style={{ animationDelay: '560ms' }}>
             <p className="text-[10px] font-semibold tracking-widest text-slate-500 mb-2.5">
               INSUFFICIENT DATA — EXCLUDED FROM SCORE
             </p>

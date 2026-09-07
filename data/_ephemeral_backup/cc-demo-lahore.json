@@ -1,0 +1,61 @@
+{
+  "analysis_id": "cc-demo-lahore",
+  "company_name": "Lahore Industrial Zone (Sparse Data)",
+  "display_name": "Lahore Industrial Zone (Sparse Data)",
+  "latitude": 31.52,
+  "longitude": 74.36,
+  "sector": "mixed",
+  "region": "Lahore, Pakistan",
+  "risk_score": null,
+  "risk_band": "unknown",
+  "overall_confidence": null,
+  "overall_status": "insufficient_data",
+  "components": [
+    {
+      "name": "satellite",
+      "label": "Satellite Signal",
+      "weight": 0.4,
+      "status": "insufficient_data",
+      "score": null,
+      "confidence": null,
+      "rationale": "Satellite imagery unavailable or too low quality for this location.",
+      "observations": [],
+      "risk_indicators": [],
+      "extracted_claims": []
+    },
+    {
+      "name": "disclosure",
+      "label": "Disclosure Discrepancy",
+      "weight": 0.4,
+      "status": "insufficient_data",
+      "score": null,
+      "confidence": null,
+      "rationale": "No public ESG disclosures or sustainability reports found for this entity.",
+      "observations": [],
+      "risk_indicators": [],
+      "extracted_claims": []
+    },
+    {
+      "name": "shipping",
+      "label": "Shipment Activity",
+      "weight": 0.2,
+      "status": "insufficient_data",
+      "score": null,
+      "confidence": null,
+      "rationale": "Shipping activity data unavailable for this region.",
+      "observations": [],
+      "risk_indicators": [],
+      "extracted_claims": []
+    }
+  ],
+  "risk_signals": [
+    "Suggested follow-up: Comprehensive data collection needed for assessment",
+    "Suggested follow-up: Encourage public ESG disclosure"
+  ],
+  "rationale": "Insufficient data across all sources. No risk score can be computed. This facility demonstrates the Insufficient Data guardrail in action.",
+  "image_reference": "cc-demo-lahore.png",
+  "acquisition_date": "2026-09-07",
+  "disclosure_sources": [],
+  "missing_sources": [],
+  "analyzed_at": "2026-09-07T14:04:12.802895"
+}

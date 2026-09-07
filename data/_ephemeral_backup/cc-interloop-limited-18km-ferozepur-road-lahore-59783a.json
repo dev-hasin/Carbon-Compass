@@ -1,0 +1,69 @@
+{
+  "analysis_id": "cc-interloop-limited-18km-ferozepur-road-lahore-59783a",
+  "company_name": "Interloop Limited, 18km Ferozepur Road, Lahore",
+  "display_name": "Lahore Division, Ferozepur Road Fly Over, Rehman Pura, Punjab 54357, Pakistan",
+  "latitude": 31.5244168,
+  "longitude": 74.3235771,
+  "sector": "textile",
+  "region": "Kasur, Pakistan",
+  "risk_score": null,
+  "risk_band": "unknown",
+  "overall_confidence": null,
+  "overall_status": "insufficient_data",
+  "components": [
+    {
+      "name": "satellite",
+      "label": "Satellite Signal",
+      "weight": 0.4,
+      "status": "insufficient_data",
+      "score": null,
+      "confidence": null,
+      "rationale": "Satellite image analysis could not be completed. Imagery may be unavailable or insufficient for AI interpretation.",
+      "observations": [],
+      "risk_indicators": [],
+      "extracted_claims": []
+    },
+    {
+      "name": "disclosure",
+      "label": "Disclosure Discrepancy",
+      "weight": 0.4,
+      "status": "insufficient_data",
+      "score": null,
+      "confidence": null,
+      "rationale": "ESG disclosure analysis could not be completed. Public disclosures may be unavailable or insufficient.",
+      "observations": [],
+      "risk_indicators": [],
+      "extracted_claims": []
+    },
+    {
+      "name": "shipping",
+      "label": "Shipment Activity",
+      "weight": 0.2,
+      "status": "insufficient_data",
+      "score": null,
+      "confidence": 0.45,
+      "rationale": "Confidence (0.45) below threshold (0.5). Data insufficient.",
+      "observations": [],
+      "risk_indicators": [],
+      "extracted_claims": []
+    }
+  ],
+  "risk_signals": [],
+  "rationale": "Insufficient data across all sources. No risk score can be computed.",
+  "image_reference": "cc-interloop-limited-18km-ferozepur-road-lahore-59783a.png",
+  "acquisition_date": "2026-09-07",
+  "disclosure_sources": [
+    "https://www.sustainabilityreports.com/interloop",
+    "https://interloop-pk.com/web/public/sustainability-report",
+    "https://interloop-pk.com/web/public/front/assets/sustainability-reports/Interloop-Sustainability-Report-2023-UPDATED_compressed.pdf",
+    "https://www.sustainabilityreports.com/interloop",
+    "https://interloop-pk.com/web/public/sustainability-report",
+    "https://interloop-pk.com/web/public/investors"
+  ],
+  "missing_sources": [
+    "Satellite Signal",
+    "Disclosure Discrepancy",
+    "Shipment Activity"
+  ],
+  "analyzed_at": "2026-09-07T10:13:18.436444"
+}

@@ -4,8 +4,10 @@ import FacilityMap, { MapViewMode } from '../components/FacilityMap';
 import RiskBadge from '../components/RiskBadge';
 import MetricCard from '../components/MetricCard';
 import DisclaimerBanner from '../components/DisclaimerBanner';
-import { getFacilities, seedDemo } from '../api';
-import type { FacilityAnalysis, RiskBand } from '../types';
+import Reveal from '../components/Reveal';
+import { getFacilities, getHeatmap, seedDemo, deleteFacility } from '../api';
+import { useAuth } from '../context/AuthContext';
+import type { FacilityAnalysis, HeatmapPoint, RiskBand } from '../types';
 import { BAND_LABELS, BAND_TEXT } from '../utils/risk';
 import { formatConfidence, formatRelativeTime, downloadFacilitiesCsv } from '../utils/format';
 
@@ -76,10 +78,13 @@ function FilterGroup<T extends string>({
 export default function DashboardPage() {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
+  const { isAdmin } = useAuth();
 
   const [facilities, setFacilities] = useState<FacilityAnalysis[]>([]);
+  const [aggregatePoints, setAggregatePoints] = useState<HeatmapPoint[] | null>(null);
   const [loading, setLoading] = useState(true);
   const [seeding, setSeeding] = useState(false);
+  const [deletingId, setDeletingId] = useState<string | null>(null);
   const [loadError, setLoadError] = useState<string | null>(null);
 
   // Filters
@@ -93,8 +98,14 @@ export default function DashboardPage() {
     setLoading(true);
     setLoadError(null);
     try {
-      const res = await getFacilities();
-      setFacilities(res.facilities);
+      // Registry + metrics come from the full facility list; the aggregate
+      // map pins arrive from the dedicated /api/v1/heatmap endpoint (SRS §7).
+      const [facilitiesRes, heatmapRes] = await Promise.all([
+        getFacilities(),
+        getHeatmap().catch(() => null),
+      ]);
+      setFacilities(facilitiesRes.facilities);
+      setAggregatePoints(heatmapRes ? heatmapRes.points : null);
     } catch {
       setLoadError('Could not reach the Carbon Compass API. Is the backend running on port 8000?');
     } finally {
@@ -113,6 +124,19 @@ export default function DashboardPage() {
       await fetchData();
     } finally {
       setSeeding(false);
+    }
+  };
+
+  const handleDelete = async (analysisId: string) => {
+    if (!window.confirm(`Delete analysis "${analysisId}" and its cached satellite image?`)) return;
+    setDeletingId(analysisId);
+    try {
+      await deleteFacility(analysisId);
+      await fetchData();
+    } catch {
+      setLoadError('Could not delete the analysis. Admin privileges are required.');
+    } finally {
+      setDeletingId(null);
     }
   };
 
@@ -191,7 +215,7 @@ export default function DashboardPage() {
     <div className="min-h-[calc(100vh-4rem)]">
       <div className="max-w-[1440px] mx-auto px-4 sm:px-6 lg:px-8 py-6">
         {/* Page header */}
-        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6 animate-fade-up">
           <div>
             <h1 className="text-2xl font-bold text-slate-50">Global Sourcing Risk</h1>
             <p className="text-sm text-slate-500 mt-1">
@@ -209,7 +233,7 @@ export default function DashboardPage() {
               value={search}
               onChange={(e) => setSearch(e.target.value)}
               placeholder="Search facility, region, or coordinates..."
-              className="w-full sm:w-80 pl-9 pr-4 py-2.5 rounded-lg border border-carbon-600 bg-carbon-850 text-sm text-slate-100 placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-accent/60"
+              className="w-full sm:w-80 pl-9 pr-4 py-2.5 rounded-lg border border-carbon-600 bg-carbon-850 text-sm text-slate-100 placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-accent/60 focus:shadow-glow transition-all duration-300"
             />
           </div>
         </div>
@@ -225,28 +249,30 @@ export default function DashboardPage() {
 
         {!hasData && !loading ? (
           /* Empty state */
-          <div className="rounded-xl border border-carbon-700 bg-carbon-850 py-20 text-center">
-            <div className="w-16 h-16 rounded-full bg-carbon-700 flex items-center justify-center mx-auto mb-5">
+          <div className="rounded-xl border border-carbon-700 bg-carbon-850 py-20 text-center animate-scale-in perspective-1200">
+            <div className="w-16 h-16 rounded-full bg-carbon-700 flex items-center justify-center mx-auto mb-5 animate-float-y">
               <svg className="w-8 h-8 text-slate-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="1.5">
                 <path d="M9 6.75V15m6-6v8.25m.503 3.498l4.875-2.437c.381-.19.622-.58.622-1.006V4.82c0-.836-.88-1.38-1.628-1.006l-3.869 1.934c-.317.159-.69.159-1.006 0L9.503 3.252a1.125 1.125 0 00-1.006 0L3.622 5.689C3.24 5.88 3 6.27 3 6.695V19.18c0 .836.88 1.38 1.628 1.006l3.869-1.934c.317-.159.69-.159 1.006 0l4.994 2.497c.317.158.69.158 1.006 0z" />
               </svg>
             </div>
             <h3 className="text-lg font-semibold text-slate-100 mb-2">No facilities analysed yet</h3>
-            <p className="text-sm text-slate-400 mb-6 max-w-md mx-auto">
+            <p className="text-sm text-slate-400 mb-6 max-w-md mx-auto px-4">
               Run a live self-audit from the search screen, or load the pre-cached demo dataset
               (four facilities covering all risk scenarios, including an intentional insufficient-data case).
             </p>
-            <div className="flex items-center justify-center gap-3">
-              <button
-                onClick={handleSeed}
-                disabled={seeding}
-                className="px-5 py-2.5 rounded-lg bg-accent text-carbon-900 text-sm font-semibold hover:bg-accent-soft disabled:opacity-50"
-              >
-                {seeding ? 'Loading...' : 'Load Demo Data'}
-              </button>
+            <div className="flex flex-col sm:flex-row items-center justify-center gap-3">
+              {isAdmin && (
+                <button
+                  onClick={handleSeed}
+                  disabled={seeding}
+                  className="w-full sm:w-auto px-5 py-2.5 rounded-lg bg-accent text-carbon-900 text-sm font-semibold hover:bg-accent-soft disabled:opacity-50 btn-3d"
+                >
+                  {seeding ? 'Loading...' : 'Load Demo Data'}
+                </button>
+              )}
               <button
                 onClick={() => navigate('/')}
-                className="px-5 py-2.5 rounded-lg border border-carbon-600 text-slate-300 text-sm font-medium hover:border-accent/50"
+                className="w-full sm:w-auto px-5 py-2.5 rounded-lg border border-carbon-600 text-slate-300 text-sm font-medium hover:border-accent/50 btn-3d-ghost"
               >
                 Run Live Analysis
               </button>
@@ -333,47 +359,53 @@ export default function DashboardPage() {
             {/* Main column */}
             <div className="lg:col-span-10 space-y-6">
               {/* Metric cards */}
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                <MetricCard
-                  label="Monitored Facilities"
-                  value={String(filtered.length)}
-                  sublabel={`+${metrics.updatedToday} analysed today`}
-                  icon={
-                    <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="1.6">
-                      <path d="M12 21v-7m0 0V8.25m0 6.75l-5.25-3.1M12 15l5.25-3.1M3 9.2v5.6c0 .5.27.97.71 1.22l7.5 4.5c.48.29 1.09.29 1.57 0l7.5-4.5c.44-.25.71-.71.71-1.22V9.2c0-.5-.27-.97-.71-1.22l-7.5-4.5a1.55 1.55 0 00-1.57 0l-7.5 4.5C3.27 8.23 3 8.7 3 9.2z" />
-                    </svg>
-                  }
-                />
-                <MetricCard
-                  label="Average Risk Score"
-                  value={metrics.avgScore !== null ? metrics.avgScore.toFixed(1) : '—'}
-                  sublabel={
-                    metrics.avgScore !== null
-                      ? `${BAND_LABELS[metrics.avgScore < 30 ? 'low' : metrics.avgScore <= 60 ? 'medium' : 'high']} median`
-                      : 'No scored facilities in view'
-                  }
-                  icon={
-                    <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="1.6">
-                      <path d="M9 12.75L11.25 15 15 9.75m-3-7.036A11.959 11.959 0 013.598 6 11.99 11.99 0 003 9.749c0 5.592 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.31-.21-2.571-.598-3.751h-.152c-3.196 0-6.1-1.248-8.25-3.285z" />
-                    </svg>
-                  }
-                />
-                <MetricCard
-                  label="High Risk Signals"
-                  value={String(metrics.highCount)}
-                  sublabel="Worth reviewing before a buyer audit"
-                  valueClass={metrics.highCount > 0 ? 'text-risk-red-soft' : 'text-slate-100'}
-                  sublabelClass={metrics.highCount > 0 ? 'text-risk-red/70' : 'text-slate-500'}
-                  icon={
-                    <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="1.6">
-                      <path d="M14.857 17.082a23.848 23.848 0 005.454-1.31A8.967 8.967 0 0118 9.75v-.7V9A6 6 0 006 9v.75a8.967 8.967 0 01-2.312 6.022c1.733.64 3.56 1.085 5.455 1.31m5.714 0a24.255 24.255 0 01-5.714 0m5.714 0a3 3 0 11-5.714 0" />
-                    </svg>
-                  }
-                />
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 perspective-1200">
+                <Reveal delay={0}>
+                  <MetricCard
+                    label="Monitored Facilities"
+                    value={String(filtered.length)}
+                    sublabel={`+${metrics.updatedToday} analysed today`}
+                    icon={
+                      <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="1.6">
+                        <path d="M12 21v-7m0 0V8.25m0 6.75l-5.25-3.1M12 15l5.25-3.1M3 9.2v5.6c0 .5.27.97.71 1.22l7.5 4.5c.48.29 1.09.29 1.57 0l7.5-4.5c.44-.25.71-.71.71-1.22V9.2c0-.5-.27-.97-.71-1.22l-7.5-4.5a1.55 1.55 0 00-1.57 0l-7.5 4.5C3.27 8.23 3 8.7 3 9.2z" />
+                      </svg>
+                    }
+                  />
+                </Reveal>
+                <Reveal delay={120}>
+                  <MetricCard
+                    label="Average Risk Score"
+                    value={metrics.avgScore !== null ? metrics.avgScore.toFixed(1) : '—'}
+                    sublabel={
+                      metrics.avgScore !== null
+                        ? `${BAND_LABELS[metrics.avgScore < 30 ? 'low' : metrics.avgScore <= 60 ? 'medium' : 'high']} median`
+                        : 'No scored facilities in view'
+                    }
+                    icon={
+                      <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="1.6">
+                        <path d="M9 12.75L11.25 15 15 9.75m-3-7.036A11.959 11.959 0 013.598 6 11.99 11.99 0 003 9.749c0 5.592 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.31-.21-2.571-.598-3.751h-.152c-3.196 0-6.1-1.248-8.25-3.285z" />
+                      </svg>
+                    }
+                  />
+                </Reveal>
+                <Reveal delay={240}>
+                  <MetricCard
+                    label="High Risk Signals"
+                    value={String(metrics.highCount)}
+                    sublabel="Worth reviewing before a buyer audit"
+                    valueClass={metrics.highCount > 0 ? 'text-risk-red-soft' : 'text-slate-100'}
+                    sublabelClass={metrics.highCount > 0 ? 'text-risk-red/70' : 'text-slate-500'}
+                    icon={
+                      <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="1.6">
+                        <path d="M14.857 17.082a23.848 23.848 0 005.454-1.31A8.967 8.967 0 0118 9.75v-.7V9A6 6 0 006 9v.75a8.967 8.967 0 01-2.312 6.022c1.733.64 3.56 1.085 5.455 1.31m5.714 0a24.255 24.255 0 01-5.714 0m5.714 0a3 3 0 11-5.714 0" />
+                      </svg>
+                    }
+                  />
+                </Reveal>
               </div>
 
               {/* Map with pins/heatmap toggle */}
-              <div className="rounded-xl border border-carbon-700 bg-carbon-850 p-3">
+              <div className="rounded-xl border border-carbon-700 bg-carbon-850 p-3 hover:border-accent/30 transition-colors duration-500 animate-fade-up" style={{ animationDelay: '150ms' }}>
                 <div className="flex items-center justify-between px-1 pb-3">
                   <p className="text-[10px] font-semibold tracking-widest text-slate-500">
                     FACILITY GEO-INTEL
@@ -395,23 +427,28 @@ export default function DashboardPage() {
                   </div>
                 </div>
                 {loading ? (
-                  <div className="h-[420px] rounded-xl border border-carbon-700 bg-carbon-800 flex items-center justify-center">
+                  <div className="h-[320px] sm:h-[420px] rounded-xl border border-carbon-700 bg-carbon-800 flex items-center justify-center">
                     <svg className="w-7 h-7 text-accent animate-spin" viewBox="0 0 24 24" fill="none">
                       <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
                       <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
                     </svg>
                   </div>
-                ) : filtered.length === 0 ? (
-                  <div className="h-[420px] rounded-xl border border-dashed border-carbon-600 flex items-center justify-center text-sm text-slate-500">
+                ) : filtered.length === 0 && (mapMode === 'pins' || !aggregatePoints?.length) ? (
+                  <div className="h-[320px] sm:h-[420px] rounded-xl border border-dashed border-carbon-600 flex items-center justify-center text-sm text-slate-500 text-center px-4">
                     No facilities match the current filters.
                   </div>
                 ) : (
-                  <FacilityMap facilities={filtered} mode={mapMode} className="h-[420px]" />
+                  <FacilityMap
+                    facilities={filtered}
+                    mode={mapMode}
+                    aggregatePoints={aggregatePoints}
+                    className="h-[320px] sm:h-[420px]"
+                  />
                 )}
               </div>
 
               {/* Monitored exporters registry */}
-              <div className="rounded-xl border border-carbon-700 bg-carbon-850">
+              <div className="rounded-xl border border-carbon-700 bg-carbon-850 animate-fade-up" style={{ animationDelay: '300ms' }}>
                 <div className="flex items-center justify-between px-4 py-3.5 border-b border-carbon-700">
                   <h2 className="text-sm font-semibold text-slate-100">
                     Monitored Exporters Registry
@@ -419,7 +456,7 @@ export default function DashboardPage() {
                   <button
                     onClick={() => downloadFacilitiesCsv(filtered)}
                     disabled={filtered.length === 0}
-                    className="inline-flex items-center gap-2 px-3 py-1.5 rounded-lg border border-carbon-600 text-xs font-semibold text-slate-300 hover:border-accent/50 hover:text-accent disabled:opacity-40 transition-colors"
+                    className="inline-flex items-center gap-2 px-3 py-1.5 rounded-lg border border-carbon-600 text-xs font-semibold text-slate-300 hover:border-accent/50 hover:text-accent disabled:opacity-40 transition-colors btn-3d-ghost"
                   >
                     <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
                       <path d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5M16.5 12L12 16.5m0 0L7.5 12m4.5 4.5V3" />
@@ -429,11 +466,21 @@ export default function DashboardPage() {
                 </div>
 
                 <div className="overflow-x-auto">
-                  <table className="w-full text-sm">
+                  <table className="w-full text-sm min-w-[560px]">
                     <thead>
                       <tr className="text-left">
-                        {['FACILITY', 'LOCATION', 'RISK SCORE', 'CONFIDENCE', 'LAST ANALYSED'].map((h) => (
-                          <th key={h} className="px-4 py-2.5 text-[10px] font-semibold tracking-widest text-slate-500">
+                        {[
+                          'FACILITY',
+                          'LOCATION',
+                          'RISK SCORE',
+                          'CONFIDENCE',
+                          'LAST ANALYSED',
+                          ...(isAdmin ? [''] : []),
+                        ].map((h, i) => (
+                          <th
+                            key={i}
+                            className="px-4 py-2.5 text-[10px] font-semibold tracking-widest text-slate-500 whitespace-nowrap"
+                          >
                             {h}
                           </th>
                         ))}
@@ -444,14 +491,14 @@ export default function DashboardPage() {
                         <tr
                           key={f.analysis_id}
                           onClick={() => navigate(`/facility/${f.analysis_id}`)}
-                          className="border-t border-carbon-700 cursor-pointer hover:bg-carbon-800/70 transition-colors"
+                          className="border-t border-carbon-700 cursor-pointer hover:bg-carbon-800/70 transition-all duration-300 hover:translate-x-1"
                         >
                           <td className="px-4 py-3">
                             <p className="font-medium text-slate-200">{f.display_name}</p>
                             <p className="text-xs text-slate-500 mt-0.5">{f.company_name}</p>
                           </td>
                           <td className="px-4 py-3">
-                            <p className="text-xs text-slate-400 tabular-nums">
+                            <p className="text-xs text-slate-400 tabular-nums whitespace-nowrap">
                               {f.latitude.toFixed(3)}, {f.longitude.toFixed(3)}
                             </p>
                             <p className="text-xs text-slate-600 mt-0.5">{f.region}</p>
@@ -472,15 +519,40 @@ export default function DashboardPage() {
                             {f.overall_confidence !== null && (
                               <div className="w-16 h-1 rounded-full bg-carbon-700 mt-1.5">
                                 <div
-                                  className="h-full rounded-full bg-accent"
+                                  className="h-full rounded-full bg-accent transition-all duration-700"
                                   style={{ width: `${Math.round(f.overall_confidence * 100)}%` }}
                                 />
                               </div>
                             )}
                           </td>
-                          <td className="px-4 py-3 text-xs text-slate-400">
+                          <td className="px-4 py-3 text-xs text-slate-400 whitespace-nowrap">
                             {formatRelativeTime(f.analyzed_at)}
                           </td>
+                          {isAdmin && (
+                            <td className="px-4 py-3 whitespace-nowrap">
+                              <button
+                                type="button"
+                                aria-label={`Delete ${f.display_name}`}
+                                title="Delete analysis (admin)"
+                                disabled={deletingId === f.analysis_id}
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  handleDelete(f.analysis_id);
+                                }}
+                                className="inline-flex items-center justify-center w-8 h-8 rounded-lg border border-carbon-600 text-slate-500 hover:text-risk-red hover:border-risk-red/50 disabled:opacity-40 transition-colors"
+                              >
+                                <svg
+                                  className="w-4 h-4"
+                                  fill="none"
+                                  viewBox="0 0 24 24"
+                                  stroke="currentColor"
+                                  strokeWidth="2"
+                                >
+                                  <path d="M14.74 9l-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673A2.25 2.25 0 0115.916 21.75h-7.832a2.25 2.25 0 01-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 00-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 013.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 00-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 00-7.5 0" />
+                                </svg>
+                              </button>
+                            </td>
+                          )}
                         </tr>
                       ))}
                     </tbody>
