@@ -75,3 +75,58 @@ class HealthResponse(BaseModel):
 class AnalysisListResponse(BaseModel):
     facilities: List[FacilityAnalysis] = []
     total: int = 0
+
+
+class HeatmapPoint(BaseModel):
+    """Lightweight map pin for dashboard rendering (SRS section 7 /api/v1/heatmap)."""
+
+    analysis_id: str
+    display_name: str
+    latitude: float
+    longitude: float
+    sector: str = "mixed"
+    risk_band: RiskBand = RiskBand.UNKNOWN
+    risk_score: Optional[float] = None
+
+
+class HeatmapResponse(BaseModel):
+    points: List[HeatmapPoint] = []
+    total: int = 0
+
+
+# --- Auth (user/admin role separation) --------------------------------
+
+class AuthRegisterRequest(BaseModel):
+    email: str = Field(..., min_length=3, max_length=200)
+    password: str = Field(..., min_length=6, max_length=200)
+    company_name: str = Field("", max_length=200)
+
+
+class AuthLoginRequest(BaseModel):
+    email: str = Field(..., min_length=3, max_length=200)
+    password: str = Field(..., min_length=1, max_length=200)
+
+
+class ChangePasswordRequest(BaseModel):
+    current_password: str = Field(..., min_length=1, max_length=200)
+    new_password: str = Field(..., min_length=6, max_length=200)
+
+
+class UserPublic(BaseModel):
+    user_id: str
+    email: str
+    company_name: str = ""
+    role: str = "user"
+    created_at: datetime
+
+
+class AuthResponse(BaseModel):
+    access_token: str
+    token_type: str = "bearer"
+    expires_in: int
+    user: UserPublic
+
+
+class DeleteResponse(BaseModel):
+    status: str = "ok"
+    deleted_id: str

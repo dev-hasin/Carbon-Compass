@@ -54,9 +54,9 @@ Return JSON with:
 
         async with httpx.AsyncClient(timeout=60) as client:
             resp = await client.post(
-                "https://dashscope.aliyuncs.com/compatible-mode/v1/chat/completions",
+                f"{settings.qwen_base_url}/chat/completions",
                 json={
-                    "model": "qwen-vl-max",
+                    "model": settings.qwen_vision_model,
                     "messages": [{
                         "role": "user",
                         "content": [
@@ -110,9 +110,9 @@ Important: Frame findings as risk signals, never as confirmed violations. Use la
 
         async with httpx.AsyncClient(timeout=60) as client:
             resp = await client.post(
-                "https://dashscope.aliyuncs.com/compatible-mode/v1/chat/completions",
+                f"{settings.qwen_base_url}/chat/completions",
                 json={
-                    "model": "qwen-max",
+                    "model": settings.qwen_text_model,
                     "messages": [{"role": "user", "content": prompt}]
                 },
                 headers={
@@ -154,9 +154,9 @@ Return JSON array of risk signal strings."""
 
         async with httpx.AsyncClient(timeout=60) as client:
             resp = await client.post(
-                "https://dashscope.aliyuncs.com/compatible-mode/v1/chat/completions",
+                f"{settings.qwen_base_url}/chat/completions",
                 json={
-                    "model": "qwen-max",
+                    "model": settings.qwen_text_model,
                     "messages": [{"role": "user", "content": prompt}]
                 },
                 headers={

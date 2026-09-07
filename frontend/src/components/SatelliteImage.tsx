@@ -42,11 +42,11 @@ export default function SatelliteImage({
   const annotations = observations.slice(0, 3);
 
   return (
-    <div className={`relative rounded-xl overflow-hidden border border-carbon-700 bg-carbon-850 ${className}`}>
+    <div className={`group relative rounded-xl overflow-hidden border border-carbon-700 bg-carbon-850 transition-colors duration-500 hover:border-accent/40 ${className}`}>
       <img
         src={getSatelliteImageUrl(imageReference)}
         alt="Sentinel-2 satellite imagery of the facility area"
-        className="w-full h-full object-cover"
+        className="w-full h-full object-cover transition-transform duration-700 ease-out-expo group-hover:scale-105"
       />
 
       {annotations.map((observation, i) => {

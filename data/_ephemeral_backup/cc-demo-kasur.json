@@ -1,0 +1,79 @@
+{
+  "analysis_id": "cc-demo-kasur",
+  "company_name": "Kasur Leather Belt",
+  "display_name": "Kasur Leather Belt",
+  "latitude": 31.12,
+  "longitude": 74.45,
+  "sector": "leather",
+  "region": "Kasur, Pakistan",
+  "risk_score": 72.0,
+  "risk_band": "high",
+  "overall_confidence": 0.64,
+  "overall_status": "ok",
+  "components": [
+    {
+      "name": "satellite",
+      "label": "Satellite Signal",
+      "weight": 0.4,
+      "status": "ok",
+      "score": 75.0,
+      "confidence": 0.68,
+      "rationale": "Dense industrial clustering visible. Areas of ground discoloration consistent with tannery operations. Visible drainage channels leading toward waterway.",
+      "observations": [
+        "Dense industrial clustering visible in satellite view",
+        "Areas of ground discoloration consistent with tannery operations",
+        "Visible drainage channels leading toward waterway"
+      ],
+      "risk_indicators": [
+        "Risk signal: Observable ground staining patterns suggest effluent management review needed",
+        "Risk signal: Proximity of industrial drainage to waterway suggests follow-up"
+      ],
+      "extracted_claims": []
+    },
+    {
+      "name": "disclosure",
+      "label": "Disclosure Discrepancy",
+      "weight": 0.4,
+      "status": "ok",
+      "score": 70.0,
+      "confidence": 0.6,
+      "rationale": "Limited public disclosure with significant gaps in environmental verification. Energy source primarily undisclosed.",
+      "observations": [],
+      "risk_indicators": [
+        "Risk signal: Independent verification of chromium management not found",
+        "Risk signal: No stated renewable energy transition plan"
+      ],
+      "extracted_claims": [
+        "Chromium management protocols documented",
+        "Effluent treatment plant mentioned in press releases"
+      ]
+    },
+    {
+      "name": "shipping",
+      "label": "Shipment Activity",
+      "weight": 0.2,
+      "status": "ok",
+      "score": 65.0,
+      "confidence": 0.52,
+      "rationale": "Facility within moderate distance of port activity. Medium trade-activity indicator.",
+      "observations": [],
+      "risk_indicators": [],
+      "extracted_claims": []
+    }
+  ],
+  "risk_signals": [
+    "Risk signal: Observable ground staining patterns suggest effluent management review needed",
+    "Risk signal: Proximity of industrial drainage to waterway suggests follow-up",
+    "Risk signal: Independent verification of chromium management not found",
+    "Risk signal: No stated renewable energy transition plan",
+    "Suggested follow-up: Comprehensive environmental audit recommended"
+  ],
+  "rationale": "Satellite Signal: Dense industrial clustering and ground discoloration patterns observed. Disclosure Discrepancy: Significant gaps in public disclosure and verification. Shipment Activity: Medium trade-activity indicator.",
+  "image_reference": "cc-demo-kasur.png",
+  "acquisition_date": "2026-09-07",
+  "disclosure_sources": [
+    "Press release on effluent treatment"
+  ],
+  "missing_sources": [],
+  "analyzed_at": "2026-09-07T14:03:41.827013"
+}

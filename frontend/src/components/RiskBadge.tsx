@@ -35,15 +35,15 @@ const DOT_CLASSES: Record<RiskBand, string> = {
 export default function RiskBadge({ band, score, variant = 'chip' }: RiskBadgeProps) {
   if (variant === 'panel') {
     return (
-      <div className="flex items-center gap-3">
+      <div className="flex items-center gap-3 perspective-800">
         <div
-          className={`w-16 h-16 rounded-xl border-2 ${PANEL_CLASSES[band]} bg-carbon-800 flex items-center justify-center`}
+          className={`w-16 h-16 rounded-xl border-2 ${PANEL_CLASSES[band]} bg-carbon-800 flex items-center justify-center card-3d preserve-3d animate-scale-in`}
         >
-          <span className="text-3xl font-bold text-slate-100">
+          <span className="text-3xl font-bold text-slate-100 pop-1">
             {score !== null && score !== undefined ? Math.round(score) : '—'}
           </span>
         </div>
-        <div>
+        <div className="animate-fade-up">
           <p className={`text-sm font-semibold tracking-wide uppercase ${band === 'high' ? 'text-risk-red-soft' : band === 'medium' ? 'text-risk-amber-soft' : band === 'low' ? 'text-risk-green-soft' : 'text-slate-400'}`}>
             {BAND_LABELS[band]}
           </p>
@@ -55,7 +55,7 @@ export default function RiskBadge({ band, score, variant = 'chip' }: RiskBadgePr
 
   return (
     <span
-      className={`inline-flex items-center gap-1.5 rounded-md border px-2 py-0.5 text-xs font-semibold ${CHIP_CLASSES[band]}`}
+      className={`inline-flex items-center gap-1.5 rounded-md border px-2 py-0.5 text-xs font-semibold ${CHIP_CLASSES[band]} transition-transform duration-300 hover:scale-105`}
     >
       <span className={`w-1.5 h-1.5 rounded-full ${DOT_CLASSES[band]}`} />
       {band === 'unknown'

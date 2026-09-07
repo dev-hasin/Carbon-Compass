@@ -1,6 +1,7 @@
 import { useEffect } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import DisclaimerBanner from '../components/DisclaimerBanner';
+import Reveal from '../components/Reveal';
 
 /**
  * Copy adapted from the Figma "how it works" reference with SRS-mandated
@@ -124,17 +125,17 @@ export default function MethodologyPage() {
   return (
     <div className="min-h-[calc(100vh-4rem)]">
       {/* Hero */}
-      <section className="relative overflow-hidden geo-grid">
+      <section className="relative overflow-hidden geo-grid-animated">
         <div className="absolute inset-0 bg-gradient-to-b from-carbon-950 via-transparent to-carbon-900 pointer-events-none" />
         <div className="relative max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 pt-16 pb-14 text-center">
-          <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full border border-accent/40 bg-accent/10 text-accent text-[11px] font-semibold tracking-widest mb-6">
+          <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full border border-accent/40 bg-accent/10 text-accent text-[11px] font-semibold tracking-widest mb-6 animate-scale-in">
             <span className="w-1.5 h-1.5 rounded-full bg-accent animate-pulse-dot" />
             METHODOLOGY &amp; CONFIDENCE MODEL
           </div>
-          <h1 className="text-3xl sm:text-4xl font-bold text-slate-50 leading-tight tracking-tight">
+          <h1 className="text-3xl sm:text-4xl font-bold text-slate-50 leading-tight tracking-tight animate-flip-in-x">
             Defensible supply chain environmental verification
           </h1>
-          <p className="mt-5 text-base text-slate-400 max-w-2xl mx-auto leading-relaxed">
+          <p className="mt-5 text-base text-slate-400 max-w-2xl mx-auto leading-relaxed animate-fade-up" style={{ animationDelay: '150ms' }}>
             Our forensic engine eliminates guesswork. We match public corporate sustainability
             disclosures against physical satellite observation using a transparent, verifiable
             weighted scoring model.
@@ -144,20 +145,24 @@ export default function MethodologyPage() {
 
       {/* Verifiable risk processing pipeline */}
       <section className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-14">
-        <h2 className="text-xl font-bold text-slate-100 mb-2">Verifiable Risk Processing Pipeline</h2>
-        <p className="text-sm text-slate-500 mb-8">
-          Each analysis runs through four stages — the same pipeline you watch live on the analysis screen.
-        </p>
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
-          {PIPELINE_STAGES.map((stage) => (
-            <div key={stage.stage} className="rounded-xl border border-carbon-700 bg-carbon-850 p-5">
-              <div className="w-11 h-11 rounded-lg bg-carbon-700 flex items-center justify-center text-accent mb-4">
-                {stage.icon}
+        <Reveal>
+          <h2 className="text-xl font-bold text-slate-100 mb-2">Verifiable Risk Processing Pipeline</h2>
+          <p className="text-sm text-slate-500 mb-8">
+            Each analysis runs through four stages — the same pipeline you watch live on the analysis screen.
+          </p>
+        </Reveal>
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5 perspective-1200">
+          {PIPELINE_STAGES.map((stage, i) => (
+            <Reveal key={stage.stage} delay={i * 110} className="h-full">
+              <div className="group h-full rounded-xl border border-carbon-700 bg-carbon-850 p-5 card-3d preserve-3d hover:border-accent/40">
+                <div className="w-11 h-11 rounded-lg bg-carbon-700 flex items-center justify-center text-accent mb-4 pop-1 transition-transform duration-500 group-hover:rotate-6 group-hover:scale-110">
+                  {stage.icon}
+                </div>
+                <p className="text-[10px] font-bold tracking-widest text-accent">{stage.stage}</p>
+                <h3 className="text-sm font-semibold text-slate-100 mt-1 mb-2 pop-2">{stage.title}</h3>
+                <p className="text-xs text-slate-400 leading-relaxed">{stage.desc}</p>
               </div>
-              <p className="text-[10px] font-bold tracking-widest text-accent">{stage.stage}</p>
-              <h3 className="text-sm font-semibold text-slate-100 mt-1 mb-2">{stage.title}</h3>
-              <p className="text-xs text-slate-400 leading-relaxed">{stage.desc}</p>
-            </div>
+            </Reveal>
           ))}
         </div>
       </section>
@@ -166,124 +171,136 @@ export default function MethodologyPage() {
       <section className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 pb-14">
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           {/* Scoring formula breakdown */}
-          <div className="rounded-xl border border-carbon-700 bg-carbon-850 p-6">
-            <h2 className="text-base font-bold text-slate-100 mb-3">Scoring Formula Breakdown</h2>
-            <p className="text-xs text-slate-400 leading-relaxed mb-6">
-              The Sustainability Risk Score aggregates independent signal layers in a fixed weighted
-              model. If a layer returns Insufficient Data, its weight is redistributed across the
-              remaining layers — the formula stays transparent at every step.
-            </p>
-            <div className="space-y-5 mb-6">
-              {WEIGHTS.map((w) => (
-                <div key={w.label}>
-                  <div className="flex items-baseline justify-between mb-1.5">
-                    <p className="text-sm font-semibold text-accent">
-                      {w.label}
-                      <span className="ml-2 text-xs font-medium text-slate-500">{w.weight}% Weight</span>
-                    </p>
-                  </div>
-                  <div className="h-2 rounded-full bg-carbon-700 overflow-hidden">
-                    <div className="h-full rounded-full bg-accent" style={{ width: `${w.weight}%` }} />
-                  </div>
-                  <p className="text-xs text-slate-500 mt-1.5">{w.desc}</p>
-                </div>
-              ))}
-            </div>
-            <div className="pt-5 border-t border-carbon-700">
-              <p className="text-[10px] font-semibold tracking-widest text-slate-500 mb-3">
-                RISK BANDS (0–100 SCALE)
+          <Reveal className="h-full">
+            <div className="h-full rounded-xl border border-carbon-700 bg-carbon-850 p-6 hover:border-accent/30 transition-colors duration-500">
+              <h2 className="text-base font-bold text-slate-100 mb-3">Scoring Formula Breakdown</h2>
+              <p className="text-xs text-slate-400 leading-relaxed mb-6">
+                The Sustainability Risk Score aggregates independent signal layers in a fixed weighted
+                model. If a layer returns Insufficient Data, its weight is redistributed across the
+                remaining layers — the formula stays transparent at every step.
               </p>
-              <div className="space-y-2">
-                {BANDS.map((band) => (
-                  <div
-                    key={band.label}
-                    className={`inline-flex w-full items-center justify-between rounded-lg border px-3 py-2 ${band.chip}`}
-                  >
-                    <span className="flex items-center gap-2 text-xs font-semibold">
-                      <span className={`w-1.5 h-1.5 rounded-full ${band.dot}`} />
-                      {band.label}
-                    </span>
-                    <span className="text-[11px] font-medium">{band.range}</span>
+              <div className="space-y-5 mb-6">
+                {WEIGHTS.map((w) => (
+                  <div key={w.label}>
+                    <div className="flex flex-wrap items-baseline justify-between gap-x-3 gap-y-1 mb-1.5">
+                      <p className="text-sm font-semibold text-accent">
+                        {w.label}
+                        <span className="ml-2 text-xs font-medium text-slate-500">{w.weight}% Weight</span>
+                      </p>
+                    </div>
+                    <div className="h-2 rounded-full bg-carbon-700 overflow-hidden">
+                      <div className="h-full rounded-full bg-accent score-fill" style={{ ['--score-width' as string]: `${w.weight}%` }} />
+                    </div>
+                    <p className="text-xs text-slate-500 mt-1.5">{w.desc}</p>
                   </div>
                 ))}
               </div>
+              <div className="pt-5 border-t border-carbon-700">
+                <p className="text-[10px] font-semibold tracking-widest text-slate-500 mb-3">
+                  RISK BANDS (0–100 SCALE)
+                </p>
+                <div className="space-y-2">
+                  {BANDS.map((band) => (
+                    <div
+                      key={band.label}
+                      className={`inline-flex w-full items-center justify-between rounded-lg border px-3 py-2 transition-transform duration-300 hover:translate-x-1 ${band.chip}`}
+                    >
+                      <span className="flex items-center gap-2 text-xs font-semibold">
+                        <span className={`w-1.5 h-1.5 rounded-full ${band.dot}`} />
+                        {band.label}
+                      </span>
+                      <span className="text-[11px] font-medium">{band.range}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
             </div>
-          </div>
+          </Reveal>
 
           {/* Verification confidence model */}
-          <div className="rounded-xl border border-carbon-700 bg-carbon-850 p-6">
-            <h2 className="text-base font-bold text-slate-100 mb-3">Verification Confidence Model</h2>
-            <p className="text-xs text-slate-400 leading-relaxed mb-4">
-              Every finding is bound to a confidence level derived from data quality. Degraded
-              satellite imagery, sparse disclosures, or weak sourcing each lower the layer's
-              confidence — and a layer below the guard threshold is excluded from scoring entirely
-              rather than guessed.
-            </p>
-            <p className="text-xs text-slate-400 leading-relaxed mb-6">
-              Each score is published with its per-layer confidence indicators and the full list of
-              data-source citations, so any figure in a report can be traced back to the evidence
-              that produced it.
-            </p>
-            <div className="rounded-lg border border-accent/40 bg-accent/5 px-4 py-3 flex items-center gap-3">
-              <svg className="w-5 h-5 text-accent flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
-                <path d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-              </svg>
-              <p className="text-xs font-bold tracking-widest text-accent">
-                PROTECTING AUDIT TRACEABILITY OVER GUESSWORK
+          <Reveal delay={140} className="h-full">
+            <div className="h-full rounded-xl border border-carbon-700 bg-carbon-850 p-6 hover:border-accent/30 transition-colors duration-500">
+              <h2 className="text-base font-bold text-slate-100 mb-3">Verification Confidence Model</h2>
+              <p className="text-xs text-slate-400 leading-relaxed mb-4">
+                Every finding is bound to a confidence level derived from data quality. Degraded
+                satellite imagery, sparse disclosures, or weak sourcing each lower the layer's
+                confidence — and a layer below the guard threshold is excluded from scoring entirely
+                rather than guessed.
+              </p>
+              <p className="text-xs text-slate-400 leading-relaxed mb-6">
+                Each score is published with its per-layer confidence indicators and the full list of
+                data-source citations, so any figure in a report can be traced back to the evidence
+                that produced it.
+              </p>
+              <div className="rounded-lg border border-accent/40 bg-accent/5 px-4 py-3 flex items-center gap-3 hover:border-accent/60 transition-colors duration-300">
+                <svg className="w-5 h-5 text-accent flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
+                  <path d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+                <p className="text-xs font-bold tracking-widest text-accent">
+                  PROTECTING AUDIT TRACEABILITY OVER GUESSWORK
+                </p>
+              </div>
+              <p className="text-[11px] text-slate-600 mt-4 leading-relaxed">
+                Note: without API keys configured, the platform runs the same pipeline in deterministic
+                mock mode for demonstration purposes.
               </p>
             </div>
-            <p className="text-[11px] text-slate-600 mt-4 leading-relaxed">
-              Note: without API keys configured, the platform runs the same pipeline in deterministic
-              mock mode for demonstration purposes.
-            </p>
-          </div>
+          </Reveal>
         </div>
       </section>
 
       {/* FAQ */}
       <section className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 pb-14">
-        <h2 className="text-xl font-bold text-slate-100 mb-8">Frequently Asked Questions</h2>
+        <Reveal>
+          <h2 className="text-xl font-bold text-slate-100 mb-8">Frequently Asked Questions</h2>
+        </Reveal>
         <div className="space-y-4">
-          {FAQ.map((item) => (
-            <div key={item.q} className="rounded-xl border border-carbon-700 bg-carbon-850 p-5">
-              <h3 className="text-sm font-semibold text-slate-100 mb-2">{item.q}</h3>
-              <p className="text-xs text-slate-400 leading-relaxed">{item.a}</p>
-            </div>
+          {FAQ.map((item, i) => (
+            <Reveal key={item.q} delay={i * 100}>
+              <div className="rounded-xl border border-carbon-700 bg-carbon-850 p-5 hover:border-accent/30 transition-all duration-500 hover:translate-x-1">
+                <h3 className="text-sm font-semibold text-slate-100 mb-2">{item.q}</h3>
+                <p className="text-xs text-slate-400 leading-relaxed">{item.a}</p>
+              </div>
+            </Reveal>
           ))}
         </div>
       </section>
 
       {/* Data sources */}
       <section id="data-sources" className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 pb-14 scroll-mt-20">
-        <h2 className="text-xl font-bold text-slate-100 mb-2">Data Sources</h2>
-        <p className="text-sm text-slate-500 mb-8">
-          Carbon Compass uses only publicly available data — no private, paywalled, or authenticated
-          supplier systems are ever accessed.
-        </p>
-        <div className="overflow-x-auto rounded-xl border border-carbon-700">
-          <table className="w-full text-sm">
-            <thead>
-              <tr className="bg-carbon-800 text-left">
-                <th className="px-4 py-2.5 text-[10px] font-semibold tracking-widest text-slate-500 uppercase">Source</th>
-                <th className="px-4 py-2.5 text-[10px] font-semibold tracking-widest text-slate-500 uppercase">Pipeline Layer</th>
-                <th className="px-4 py-2.5 text-[10px] font-semibold tracking-widest text-slate-500 uppercase">What It Provides</th>
-              </tr>
-            </thead>
-            <tbody>
-              {DATA_SOURCES.map((src) => (
-                <tr key={src.source} className="border-t border-carbon-700 align-top">
-                  <td className="px-4 py-3 text-xs font-semibold text-slate-300">{src.source}</td>
-                  <td className="px-4 py-3">
-                    <span className="inline-flex px-2 py-0.5 rounded text-[10px] font-bold tracking-wider border border-accent/40 bg-accent/10 text-accent">
-                      {src.layer.toUpperCase()}
-                    </span>
-                  </td>
-                  <td className="px-4 py-3 text-xs text-slate-400">{src.detail}</td>
+        <Reveal>
+          <h2 className="text-xl font-bold text-slate-100 mb-2">Data Sources</h2>
+          <p className="text-sm text-slate-500 mb-8">
+            Carbon Compass uses only publicly available data — no private, paywalled, or authenticated
+            supplier systems are ever accessed.
+          </p>
+        </Reveal>
+        <Reveal delay={120}>
+          <div className="overflow-x-auto rounded-xl border border-carbon-700">
+            <table className="w-full text-sm min-w-[600px]">
+              <thead>
+                <tr className="bg-carbon-800 text-left">
+                  <th className="px-4 py-2.5 text-[10px] font-semibold tracking-widest text-slate-500 uppercase">Source</th>
+                  <th className="px-4 py-2.5 text-[10px] font-semibold tracking-widest text-slate-500 uppercase">Pipeline Layer</th>
+                  <th className="px-4 py-2.5 text-[10px] font-semibold tracking-widest text-slate-500 uppercase">What It Provides</th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
+              </thead>
+              <tbody>
+                {DATA_SOURCES.map((src) => (
+                  <tr key={src.source} className="border-t border-carbon-700 align-top hover:bg-carbon-800/60 transition-colors duration-300">
+                    <td className="px-4 py-3 text-xs font-semibold text-slate-300">{src.source}</td>
+                    <td className="px-4 py-3">
+                      <span className="inline-flex px-2 py-0.5 rounded text-[10px] font-bold tracking-wider border border-accent/40 bg-accent/10 text-accent">
+                        {src.layer.toUpperCase()}
+                      </span>
+                    </td>
+                    <td className="px-4 py-3 text-xs text-slate-400">{src.detail}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </Reveal>
       </section>
 
       {/* CTA */}
@@ -295,7 +312,7 @@ export default function MethodologyPage() {
           </div>
           <Link
             to="/"
-            className="inline-flex items-center gap-2 px-6 py-3 rounded-lg bg-accent text-carbon-900 text-sm font-semibold hover:bg-accent-soft transition-colors shadow-glow flex-shrink-0"
+            className="inline-flex items-center gap-2 px-6 py-3 rounded-lg bg-accent text-carbon-900 text-sm font-semibold hover:bg-accent-soft transition-colors shadow-glow flex-shrink-0 btn-3d"
           >
             Begin Live Self-Audit
             <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">

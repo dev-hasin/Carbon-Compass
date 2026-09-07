@@ -1,8 +1,10 @@
 import { useEffect, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import SearchBox from '../components/SearchBox';
 import DisclaimerBanner from '../components/DisclaimerBanner';
+import Reveal from '../components/Reveal';
 import { getFacilities } from '../api';
+import { useAuth } from '../context/AuthContext';
 
 /**
  * Copy adapted from the Figma reference with SRS-mandated honesty:
@@ -56,14 +58,19 @@ const EVIDENCE_SOURCES = [
 
 export default function LandingPage() {
   const navigate = useNavigate();
+  const { user } = useAuth();
   const [facilityCount, setFacilityCount] = useState<number | null>(null);
 
-  // Live stat: real count of analysed facilities — no fabricated marketing numbers.
+  // Live stat: real count of analysed facilities — no fabricated marketing
+  // numbers. Only fetched for signed-in visitors; anonymous requests would
+  // 401 (the registry is an authenticated endpoint), and the landing page
+  // must stay open to everyone.
   useEffect(() => {
+    if (!user) return;
     getFacilities()
       .then((res) => setFacilityCount(res.total))
       .catch(() => setFacilityCount(null));
-  }, []);
+  }, [user]);
 
   const handleAnalyze = (query: string, sector: string) => {
     navigate(`/analysis?query=${encodeURIComponent(query)}&sector=${encodeURIComponent(sector)}`);
@@ -72,39 +79,60 @@ export default function LandingPage() {
   return (
     <div className="min-h-[calc(100vh-4rem)] flex flex-col">
       {/* Hero */}
-      <section className="relative overflow-hidden geo-grid">
+      <section className="relative overflow-hidden geo-grid-animated">
         <div className="absolute inset-0 bg-gradient-to-b from-carbon-950 via-transparent to-carbon-900 pointer-events-none" />
         <div className="absolute inset-0 pointer-events-none">
-          <div className="absolute top-[-180px] left-1/2 -translate-x-1/2 w-[640px] h-[640px] rounded-full bg-accent/10 blur-[140px]" />
+          <div className="absolute top-[-180px] left-1/2 -translate-x-1/2 w-[640px] h-[640px] rounded-full bg-accent/10 blur-[140px] animate-glow-pulse" />
         </div>
 
         <div className="relative max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 pt-20 pb-16 text-center">
-          <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full border border-accent/40 bg-accent/10 text-accent text-[11px] font-semibold tracking-widest mb-7">
+          <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full border border-accent/40 bg-accent/10 text-accent text-[11px] font-semibold tracking-widest mb-7 animate-scale-in">
             <span className="w-1.5 h-1.5 rounded-full bg-accent animate-pulse-dot" />
             EUDR &amp; CBAM COMPLIANCE RADAR
           </div>
 
-          <h1 className="text-3xl sm:text-4xl lg:text-5xl font-bold text-slate-50 leading-tight tracking-tight max-w-3xl mx-auto">
-            AI-powered supply chain sustainability intelligence
+          <h1 className="text-3xl sm:text-4xl lg:text-5xl font-bold text-slate-50 leading-tight tracking-tight max-w-3xl mx-auto animate-flip-in-x">
+            AI-powered supply chain{' '}
+            <span className="shimmer-text">sustainability intelligence</span>
           </h1>
 
-          <p className="mt-5 text-base sm:text-lg text-slate-400 max-w-2xl mx-auto leading-relaxed">
+          <p className="mt-5 text-base sm:text-lg text-slate-400 max-w-2xl mx-auto leading-relaxed animate-fade-up" style={{ animationDelay: '120ms' }}>
             Audit environmental compliance at the facility level before buyers do.
             Cross-check public satellite imagery and ESG disclosures against
             observable evidence — automatically.
           </p>
 
-          <div className="mt-10 animate-fade-up">
+          <div className="mt-10 animate-fade-up" style={{ animationDelay: '240ms' }}>
             <SearchBox onSubmit={handleAnalyze} isLoading={false} />
           </div>
 
+          {/* Account CTA for visitors — signed-in users see the live count instead */}
+          {!user && (
+            <div className="mt-8 flex flex-col sm:flex-row items-center justify-center gap-3 animate-fade-up" style={{ animationDelay: '320ms' }}>
+              <Link
+                to="/login?mode=signup"
+                className="w-full sm:w-auto px-6 py-3 rounded-lg bg-accent text-carbon-900 text-sm font-bold hover:bg-accent-soft transition-all shadow-glow btn-3d"
+              >
+                Create Account
+              </Link>
+              <Link
+                to="/login"
+                className="w-full sm:w-auto px-6 py-3 rounded-lg border border-carbon-600 text-sm font-semibold text-slate-200 hover:border-accent/50 hover:text-accent transition-colors btn-3d-ghost"
+              >
+                Sign In
+              </Link>
+            </div>
+          )}
+
           {/* Live stats — derived from the actual analysis cache */}
-          <div className="mt-8 flex items-center justify-center gap-8 text-sm text-slate-400">
+          <div className="mt-8 flex flex-col sm:flex-row items-center justify-center gap-3 sm:gap-8 text-sm text-slate-400 animate-fade-up" style={{ animationDelay: '360ms' }}>
             <span className="flex items-center gap-2">
               <span className="w-1.5 h-1.5 rounded-full bg-risk-green" />
-              {facilityCount !== null
-                ? `${facilityCount.toLocaleString()} Facilities Analysed`
-                : 'Loading facility stats...'}
+              {user
+                ? facilityCount !== null
+                  ? `${facilityCount.toLocaleString()} Facilities Analysed`
+                  : 'Loading facility stats...'
+                : 'Free exporter account — analyses run on live public data'}
             </span>
             <span className="flex items-center gap-2">
               <span className="w-1.5 h-1.5 rounded-full bg-accent" />
@@ -116,34 +144,37 @@ export default function LandingPage() {
 
       {/* Forensic compliance modules */}
       <section className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-16 w-full">
-        <h2 className="text-xl font-bold text-slate-100 mb-2">Forensic Compliance Modules</h2>
-        <p className="text-sm text-slate-500 mb-8">
-          Three independent evidence layers, each with its own confidence value — a missing layer is disclosed, never guessed.
-        </p>
+        <Reveal>
+          <h2 className="text-xl font-bold text-slate-100 mb-2">Forensic Compliance Modules</h2>
+          <p className="text-sm text-slate-500 mb-8">
+            Three independent evidence layers, each with its own confidence value — a missing layer is disclosed, never guessed.
+          </p>
+        </Reveal>
 
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
-          {MODULES.map((m) => (
-            <div
-              key={m.title}
-              className="group rounded-xl border border-carbon-700 bg-carbon-850 p-6 hover:border-accent/50 transition-colors"
-            >
-              <div className="flex items-start justify-between mb-4">
-                <div className="w-11 h-11 rounded-lg bg-accent/10 border border-accent/30 text-accent flex items-center justify-center">
-                  {m.icon}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-5 perspective-1200">
+          {MODULES.map((m, i) => (
+            <Reveal key={m.title} delay={i * 120} className="h-full">
+              <div
+                className="group h-full rounded-xl border border-carbon-700 bg-carbon-850 p-6 hover:border-accent/50 transition-colors card-3d preserve-3d"
+              >
+                <div className="flex items-start justify-between mb-4">
+                  <div className="w-11 h-11 rounded-lg bg-accent/10 border border-accent/30 text-accent flex items-center justify-center pop-1">
+                    {m.icon}
+                  </div>
+                  <span className="text-[10px] font-semibold tracking-widest text-slate-500 mt-2">
+                    {m.subtitle}
+                  </span>
                 </div>
-                <span className="text-[10px] font-semibold tracking-widest text-slate-500 mt-2">
-                  {m.subtitle}
-                </span>
+                <h3 className="text-lg font-semibold text-slate-100 mb-2 pop-2">{m.title}</h3>
+                <p className="text-sm text-slate-400 leading-relaxed">{m.desc}</p>
+                <div className="mt-5 pt-4 border-t border-carbon-700 flex items-center justify-between">
+                  <span className="text-xs font-semibold text-accent pop-3">{m.stat}</span>
+                  <svg className="w-4 h-4 text-slate-600 group-hover:text-accent group-hover:translate-x-1 group-hover:-translate-y-0.5 transition-all duration-300" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
+                    <path d="M8.25 4.5l7.5 7.5-7.5 7.5" />
+                  </svg>
+                </div>
               </div>
-              <h3 className="text-lg font-semibold text-slate-100 mb-2">{m.title}</h3>
-              <p className="text-sm text-slate-400 leading-relaxed">{m.desc}</p>
-              <div className="mt-5 pt-4 border-t border-carbon-700 flex items-center justify-between">
-                <span className="text-xs font-semibold text-accent">{m.stat}</span>
-                <svg className="w-4 h-4 text-slate-600 group-hover:text-accent group-hover:translate-x-0.5 transition-all" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
-                  <path d="M8.25 4.5l7.5 7.5-7.5 7.5" />
-                </svg>
-              </div>
-            </div>
+            </Reveal>
           ))}
         </div>
       </section>
@@ -151,18 +182,20 @@ export default function LandingPage() {
       {/* Evidence sources + disclaimer */}
       <section className="mt-auto">
         <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-          <div className="rounded-xl border border-carbon-700 bg-carbon-850 px-6 py-5">
-            <p className="text-[10px] font-semibold tracking-widest text-slate-500 mb-3 text-center">
-              VERIFIABLE EVIDENCE SOURCES
-            </p>
-            <div className="flex flex-wrap items-center justify-center gap-x-8 gap-y-2">
-              {EVIDENCE_SOURCES.map((source) => (
-                <span key={source} className="text-sm font-medium text-slate-300">
-                  {source}
-                </span>
-              ))}
+          <Reveal>
+            <div className="rounded-xl border border-carbon-700 bg-carbon-850 px-6 py-5 hover:border-accent/30 transition-colors duration-500">
+              <p className="text-[10px] font-semibold tracking-widest text-slate-500 mb-3 text-center">
+                VERIFIABLE EVIDENCE SOURCES
+              </p>
+              <div className="flex flex-wrap items-center justify-center gap-x-8 gap-y-2">
+                {EVIDENCE_SOURCES.map((source) => (
+                  <span key={source} className="text-sm font-medium text-slate-300 hover:text-accent transition-colors duration-300">
+                    {source}
+                  </span>
+                ))}
+              </div>
             </div>
-          </div>
+          </Reveal>
 
           <div className="mt-5">
             <DisclaimerBanner variant="inline" />

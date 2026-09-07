@@ -32,19 +32,20 @@ const STAGES: { id: AnalysisStage; title: string; pendingHint: string }[] = [
   },
 ];
 
-/** Radar-style scan visual (Figma "SCANNING GRID" card). */
+/** Radar-style scan visual (Figma "SCANNING GRID" card) with 3D depth. */
 function ScanVisual() {
   return (
-    <div className="relative w-full aspect-square max-w-[260px] mx-auto">
+    <div className="relative w-full aspect-square max-w-[260px] mx-auto animate-float-y">
+      <div className="absolute inset-[-12%] rounded-full bg-accent/5 blur-2xl" />
       {[100, 72, 46, 22].map((size) => (
         <div
           key={size}
-          className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 rounded-full border border-accent/25"
+          className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 rounded-full border border-accent/25 transition-transform duration-700"
           style={{ width: `${size}%`, height: `${size}%` }}
         />
       ))}
       {/* Sweep */}
-      <div className="absolute inset-0 rounded-full overflow-hidden">
+      <div className="absolute inset-0 rounded-full overflow-hidden animate-glow-pulse">
         <div
           className="absolute inset-0 animate-radar-sweep"
           style={{
@@ -116,7 +117,14 @@ export default function AnalysisPage() {
       query,
       sector || null,
       (event) => {
-        if (event.type === 'stage') {
+        if (event.type === 'init') {
+          // Reset every stage to pending so the run starts from a clean slate.
+          setStageStates(
+            Object.fromEntries(
+              STAGES.map((s) => [s.id, { status: 'pending', detail: s.pendingHint } as StageState])
+            )
+          );
+        } else if (event.type === 'stage') {
           setStageStates((prev) => ({
             ...prev,
             [event.stage]: { status: event.status, detail: event.detail },
@@ -192,7 +200,7 @@ export default function AnalysisPage() {
             </p>
           )}
         </div>
-        <div className="text-right">
+        <div className="text-right animate-slide-in-right">
           <p className="text-[10px] font-semibold tracking-widest text-slate-500">ELAPSED TIME</p>
           <p className="text-2xl font-bold text-accent tabular-nums">
             {formatElapsed(elapsed)}
@@ -219,7 +227,7 @@ export default function AnalysisPage() {
       ) : (
         <div className="grid grid-cols-1 lg:grid-cols-5 gap-6">
           {/* Stage task list */}
-          <div className="lg:col-span-3 rounded-xl border border-carbon-700 bg-carbon-850 p-6">
+          <div className="lg:col-span-3 rounded-xl border border-carbon-700 bg-carbon-850 p-6 animate-slide-in-right shadow-depth-1">
             <div className="space-y-5">
               {STAGES.map((stage, index) => {
                 const state = stageStates[stage.id];
@@ -228,9 +236,11 @@ export default function AnalysisPage() {
                 return (
                   <div
                     key={stage.id}
-                    className={`rounded-lg p-4 border transition-all ${
+                    className={`rounded-lg p-4 border transition-all duration-500 ease-out-expo ${
                       isRunning
-                        ? 'border-accent/60 bg-accent/5'
+                        ? 'border-accent/60 bg-accent/5 stage-running-glow transform translate-x-1'
+                        : isDone
+                        ? 'border-risk-green/20 transform translate-x-0'
                         : 'border-transparent'
                     }`}
                   >
@@ -277,12 +287,12 @@ export default function AnalysisPage() {
           </div>
 
           {/* Scan visual + satellite diagnostic */}
-          <div className="lg:col-span-2 space-y-6">
-            <div className="rounded-xl border border-carbon-700 bg-carbon-850 p-6">
+          <div className="lg:col-span-2 space-y-6 perspective-1200">
+            <div className="rounded-xl border border-carbon-700 bg-carbon-850 p-6 animate-scale-in hover:border-accent/40 transition-colors duration-500 shadow-depth-1">
               <ScanVisual />
             </div>
 
-            <div className="rounded-xl border border-carbon-700 bg-carbon-850 p-4">
+            <div className="rounded-xl border border-carbon-700 bg-carbon-850 p-4 animate-fade-up" style={{ animationDelay: '200ms' }}>
               <p className="text-[10px] font-semibold tracking-widest text-slate-500 mb-3">
                 SATELLITE PASS DIAGNOSTIC
               </p>

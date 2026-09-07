@@ -1,0 +1,79 @@
+{
+  "analysis_id": "cc-demo-faisalabad",
+  "company_name": "Faisalabad Textile Hub",
+  "display_name": "Faisalabad Textile Hub",
+  "latitude": 31.418,
+  "longitude": 73.079,
+  "sector": "textile",
+  "region": "Faisalabad, Pakistan",
+  "risk_score": 47.0,
+  "risk_band": "medium",
+  "overall_confidence": 0.71,
+  "overall_status": "ok",
+  "components": [
+    {
+      "name": "satellite",
+      "label": "Satellite Signal",
+      "weight": 0.4,
+      "status": "ok",
+      "score": 55.0,
+      "confidence": 0.78,
+      "rationale": "Observable land-use patterns near facility boundary. Multiple building structures visible with varying roof conditions. Adjacent waterway with slight discoloration near discharge point.",
+      "observations": [
+        "Observable industrial land-use patterns near facility boundary",
+        "Multiple building structures visible with varying roof conditions",
+        "Adjacent waterway with slight discoloration near discharge point"
+      ],
+      "risk_indicators": [
+        "Observable signal suggests follow-up on water management practices",
+        "Land-use density consistent with active industrial operations"
+      ],
+      "extracted_claims": []
+    },
+    {
+      "name": "disclosure",
+      "label": "Disclosure Discrepancy",
+      "weight": 0.4,
+      "status": "ok",
+      "score": 42.0,
+      "confidence": 0.68,
+      "rationale": "Renewable energy claim lacks third-party verification in public text. Water treatment efficacy metrics partially disclosed.",
+      "observations": [],
+      "risk_indicators": [
+        "Risk signal: Renewable energy claim lacks third-party verification",
+        "Suggested follow-up: Water treatment efficacy metrics not fully disclosed"
+      ],
+      "extracted_claims": [
+        "Company targets 15% renewable energy mix by 2025",
+        "Water treatment facility operational since 2022",
+        "Waste management practices referenced in annual report"
+      ]
+    },
+    {
+      "name": "shipping",
+      "label": "Shipment Activity",
+      "weight": 0.2,
+      "status": "ok",
+      "score": 40.0,
+      "confidence": 0.55,
+      "rationale": "Facility distant from major ports. Low trade-activity indicator based on geographic analysis.",
+      "observations": [],
+      "risk_indicators": [],
+      "extracted_claims": []
+    }
+  ],
+  "risk_signals": [
+    "Risk signal: Renewable energy claim lacks third-party verification in public text",
+    "Risk signal: Observable satellite features warrant cross-referencing with stated environmental claims",
+    "Suggested follow-up: Water treatment efficacy metrics not fully disclosed"
+  ],
+  "rationale": "Satellite Signal: Observable land-use patterns and water features near facility boundary suggest moderate risk signals. Disclosure Discrepancy: Renewable energy claim lacks third-party verification. Shipment Activity: Low trade-activity indicator based on distance from major ports.",
+  "image_reference": "cc-demo-faisalabad.png",
+  "acquisition_date": "2026-09-07",
+  "disclosure_sources": [
+    "Public sustainability report",
+    "Annual report ESG section"
+  ],
+  "missing_sources": [],
+  "analyzed_at": "2026-09-07T14:03:32.870037"
+}

@@ -47,6 +47,10 @@ data/satellite/*
 !data/analyses/.gitkeep
 !data/satellite/.gitkeep
 
+# === User accounts & auth secrets (password hashes / signing key — never commit) ===
+data/users.json
+data/auth_secret.key
+
 # === IDE / Editor ===
 .vscode/
 .idea/

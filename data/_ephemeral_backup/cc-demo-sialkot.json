@@ -1,0 +1,75 @@
+{
+  "analysis_id": "cc-demo-sialkot",
+  "company_name": "Sialkot Manufacturing Zone",
+  "display_name": "Sialkot Manufacturing Zone",
+  "latitude": 32.49,
+  "longitude": 74.53,
+  "sector": "manufacturing",
+  "region": "Sialkot, Pakistan",
+  "risk_score": 18.0,
+  "risk_band": "low",
+  "overall_confidence": 0.79,
+  "overall_status": "ok",
+  "components": [
+    {
+      "name": "satellite",
+      "label": "Satellite Signal",
+      "weight": 0.4,
+      "status": "ok",
+      "score": 15.0,
+      "confidence": 0.82,
+      "rationale": "Well-organized industrial facility with maintained grounds. Solar panel arrays visible on rooftops. Clear boundary between industrial and green buffer zones.",
+      "observations": [
+        "Well-organized industrial facility with maintained grounds",
+        "Solar panel arrays visible on rooftops",
+        "Clear boundary between industrial and green buffer zones"
+      ],
+      "risk_indicators": [
+        "Low observable risk — facility appears well-maintained from satellite perspective"
+      ],
+      "extracted_claims": []
+    },
+    {
+      "name": "disclosure",
+      "label": "Disclosure Discrepancy",
+      "weight": 0.4,
+      "status": "ok",
+      "score": 20.0,
+      "confidence": 0.8,
+      "rationale": "Strong disclosure with specific metrics and certifications referenced. Minor gap in verification body identification.",
+      "observations": [],
+      "risk_indicators": [
+        "Suggested follow-up: ISO certification body not specified"
+      ],
+      "extracted_claims": [
+        "ISO 14001 certification referenced in annual report",
+        "Solar panel installation for rooftop power generation announced",
+        "Waste reduction targets stated with specific metrics"
+      ]
+    },
+    {
+      "name": "shipping",
+      "label": "Shipment Activity",
+      "weight": 0.2,
+      "status": "ok",
+      "score": 25.0,
+      "confidence": 0.5,
+      "rationale": "Facility distant from major ports. Low trade-activity indicator.",
+      "observations": [],
+      "risk_indicators": [],
+      "extracted_claims": []
+    }
+  ],
+  "risk_signals": [
+    "Suggested follow-up: ISO certification body not specified"
+  ],
+  "rationale": "Satellite Signal: Well-maintained facility with visible solar infrastructure. Disclosure Discrepancy: Strong public disclosure with specific metrics. Shipment Activity: Low trade-activity indicator.",
+  "image_reference": "cc-demo-sialkot.png",
+  "acquisition_date": "2026-09-07",
+  "disclosure_sources": [
+    "Annual sustainability report",
+    "ISO certification reference"
+  ],
+  "missing_sources": [],
+  "analyzed_at": "2026-09-07T14:04:02.239522"
+}

@@ -1,6 +1,6 @@
 import logging
 import io
-from datetime import datetime
+from datetime import datetime, timedelta
 from typing import Optional
 import httpx
 from app.core.config import get_settings
@@ -82,7 +82,11 @@ async def _fetch_sentinel_image(
                 },
                 "data": [{
                     "type": "sentinel-2-l2a",
-                    "dataFilter": {"timeRange": _recent_time_range()},
+                    "dataFilter": {
+                        "timeRange": _recent_time_range(),
+                        "maxCloudCoverage": 30,
+                        "mosaickingOrder": "mostRecent",
+                    },
                 }]
             },
             "output": {
@@ -93,7 +97,7 @@ async def _fetch_sentinel_image(
             "evalscript": evalscript,
         }
 
-        async with httpx.AsyncClient(timeout=30) as client:
+        async with httpx.AsyncClient(timeout=120) as client:
             resp = await client.post(
                 "https://services.sentinel-hub.com/api/v1/process",
                 json=payload,
@@ -114,10 +118,14 @@ def _bbox_from_coords(lat: float, lng: float, delta: float = 0.01):
 
 
 def _recent_time_range():
+    """ISO-8601 datetimes are mandatory — date-only strings are rejected with 400.
+    A 90-day window with mostRecent mosaicking keeps the latest cloud-free scene
+    available even when the current month has no usable acquisitions (SRS 5.3)."""
     now = datetime.utcnow()
-    from_date = now.replace(day=1).strftime("%Y-%m-%d")
-    to_date = now.strftime("%Y-%m-%d")
-    return {"from": from_date, "to": to_date}
+    return {
+        "from": (now - timedelta(days=90)).strftime("%Y-%m-%dT%H:%M:%SZ"),
+        "to": now.strftime("%Y-%m-%dT%H:%M:%SZ"),
+    }
 
 
 def _insufficient_satellite() -> dict:

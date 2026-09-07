@@ -1,0 +1,242 @@
+[
+  {
+    "user_id": "usr-18794bee3b75",
+    "email": "admin@carbon-compass.local",
+    "company_name": "Carbon Compass",
+    "role": "admin",
+    "password_hash": "pbkdf2_sha256$240000$33bdcbe9a1d8c0fdcde295dad6eeb7bd$5b87aeae344464d134b9c994b7d4fb2fcb47536341b27544adc9ee6757ef2a36",
+    "created_at": "2026-09-07T11:11:26.012106"
+  },
+  {
+    "user_id": "usr-78dacd170bcc",
+    "email": "exporter22038@test.local",
+    "company_name": "Test Exporter Ltd",
+    "role": "user",
+    "password_hash": "pbkdf2_sha256$240000$e154c9a1ee2711d35c168ce9dd4c0747$b87429add91abf901cc68d299b192c4adbd4f36d28cf7095610b55dc75f3c4f5",
+    "created_at": "2026-09-07T11:11:47.497903"
+  },
+  {
+    "user_id": "usr-810de6109297",
+    "email": "test-exporter-7842@example.com",
+    "company_name": "Test Exporter",
+    "role": "user",
+    "password_hash": "pbkdf2_sha256$240000$f42e181143b96129e098d5494bc4eeba$c3ae72b308599aa00974d550dd3c2d85a4622d2b1731c1969fd7821a9bebdfd4",
+    "created_at": "2026-09-07T11:24:23.014181"
+  },
+  {
+    "user_id": "usr-13098b9e8ff2",
+    "email": "exporter91709@test.local",
+    "company_name": "Test Exporter Ltd",
+    "role": "user",
+    "password_hash": "pbkdf2_sha256$240000$ddc4bc1543005f93215cc56260771f4d$dd79771a774ad67190a77c44b57f35f9cd98f1941abc7cbdaa5c2f7ecd1747c0",
+    "created_at": "2026-09-07T11:38:26.992479",
+    "pwd_changed_at": 1788781106.9924903
+  },
+  {
+    "user_id": "usr-cf7660d1e9ef",
+    "email": "pwd-test-70746@test.local",
+    "company_name": "Pwd Test",
+    "role": "user",
+    "password_hash": "pbkdf2_sha256$240000$72d9144e8169d34c1cd9d69645c097a5$3d73a0e684a3acb45f2c23a20e3c8e44bd339d0df8f567a8524aec2c69b09897",
+    "created_at": "2026-09-07T11:38:27.127629",
+    "pwd_changed_at": 1788781107.1276453
+  },
+  {
+    "user_id": "usr-74ac74e5c5c2",
+    "email": "lock-test-8488@test.local",
+    "company_name": "Lock Test",
+    "role": "user",
+    "password_hash": "pbkdf2_sha256$240000$a062bc6aef301a1d8acd60890a444c90$ef8f34c8494735bc066cbb629d48db0586fb9fb512049bdef3ebaed9ad1ed936",
+    "created_at": "2026-09-07T11:38:27.579920",
+    "pwd_changed_at": 1788781107.5799365
+  },
+  {
+    "user_id": "usr-c4f93ec2baef",
+    "email": "exporter57064@test.local",
+    "company_name": "Test Exporter Ltd",
+    "role": "user",
+    "password_hash": "pbkdf2_sha256$240000$fb1670b5faf273c84f4d6ac19b0be1e7$d28c9d8050cebb4ac4f04545c3e6ac2f3baef4b4d06a71156c9520682934d963",
+    "created_at": "2026-09-07T11:44:23.116414",
+    "pwd_changed_at": 1788781463.1164274
+  },
+  {
+    "user_id": "usr-7f05f17832a8",
+    "email": "pwd-test-19727@test.local",
+    "company_name": "Pwd Test",
+    "role": "user",
+    "password_hash": "pbkdf2_sha256$240000$ec85c0e448ba281dbfca6afa9a2c2b9a$9b332ab4184a603ae6142014aa95ca6cba8cef62091501620fe9f082702b4d9a",
+    "created_at": "2026-09-07T11:44:23.258014",
+    "pwd_changed_at": 1788781463.5841937
+  },
+  {
+    "user_id": "usr-1a5fb72b3165",
+    "email": "lock-test-84270@test.local",
+    "company_name": "Lock Test",
+    "role": "user",
+    "password_hash": "pbkdf2_sha256$240000$9f52f031517ed28726bc5d234196ab01$541be3384d7fe3d1b8b08a906591ec2e5e7005da5becfcc3abf91df5fc9fcfbb",
+    "created_at": "2026-09-07T11:44:23.922969",
+    "pwd_changed_at": 1788781463.9229796
+  },
+  {
+    "user_id": "usr-aa8222cae1aa",
+    "email": "exporter85099@test.local",
+    "company_name": "Test Exporter Ltd",
+    "role": "user",
+    "password_hash": "pbkdf2_sha256$240000$65effe2e992dbf6fc4fe7bad8c287fd5$8eea67db5488431a8467edc5973c26e3792bd9b7bdc99263c2b18ed03c6a6fd0",
+    "created_at": "2026-09-07T11:46:43.309160",
+    "pwd_changed_at": 1788781603.3091702
+  },
+  {
+    "user_id": "usr-1020193683f8",
+    "email": "pwd-test-28537@test.local",
+    "company_name": "Pwd Test",
+    "role": "user",
+    "password_hash": "pbkdf2_sha256$240000$1df051c2ca730690fced5330d7b41d2d$1d26a7f80f1c938f685655b7ebf620eb403c0202060118fab9f0907b3fe924e2",
+    "created_at": "2026-09-07T11:46:43.431069",
+    "pwd_changed_at": 1788781603.752236
+  },
+  {
+    "user_id": "usr-08e28d465718",
+    "email": "lock-test-48051@test.local",
+    "company_name": "Lock Test",
+    "role": "user",
+    "password_hash": "pbkdf2_sha256$240000$3d847f451aee67aa72dcfe479f3a674f$77a20f07a252c21cc57b11872165439f14f22b6e29e40941b34a94e0ce425f52",
+    "created_at": "2026-09-07T11:46:44.092427",
+    "pwd_changed_at": 1788781604.0924375
+  },
+  {
+    "user_id": "usr-f9b7d701f489",
+    "email": "sec-test-98765@example.com",
+    "company_name": "Sec Test",
+    "role": "user",
+    "password_hash": "pbkdf2_sha256$240000$f94f667f4f3c6574ccb74914bd9a4f46$4d5893796097b95035e0c179c1e4090a72ef582ff1553d4ce036487dc278c905",
+    "created_at": "2026-09-07T11:58:42.585541",
+    "pwd_changed_at": 1788782322.585552
+  },
+  {
+    "user_id": "usr-4fa8be96aba8",
+    "email": "browser-verify-3301@test.local",
+    "company_name": "Browser Verify",
+    "role": "user",
+    "password_hash": "pbkdf2_sha256$240000$ef0119a17ac5feb396f50d45e17a7f20$e843e839845c009e01a33790a916a905d23a23ad041fa283350ffa7bbc979763",
+    "created_at": "2026-09-07T12:16:07.123909",
+    "pwd_changed_at": 1788785819.5689085
+  },
+  {
+    "user_id": "usr-6c0df77ecb98",
+    "email": "browser-verify-4402@test.local",
+    "company_name": "Browser Verify 2",
+    "role": "user",
+    "password_hash": "pbkdf2_sha256$240000$5e0405f0414d4201000b406d83b689f6$990b690e600576c432f15530b5eb88918f5e046674203eff29134a0130b8d292",
+    "created_at": "2026-09-07T13:00:45.873257",
+    "pwd_changed_at": 1788786683.7362862
+  },
+  {
+    "user_id": "usr-86ece2a093da",
+    "email": "exporter72451@test.local",
+    "company_name": "Test Exporter Ltd",
+    "role": "user",
+    "password_hash": "pbkdf2_sha256$240000$5fcc5d47983a976764198df00a99e97f$5b62c1003905569e9ec8287ab552fd51f7c3ed5f4a256bc6ac762a6610599196",
+    "created_at": "2026-09-07T13:24:53.934351",
+    "pwd_changed_at": 1788787493.934361
+  },
+  {
+    "user_id": "usr-3991ad9f1429",
+    "email": "pwd-test-20692@test.local",
+    "company_name": "Pwd Test",
+    "role": "user",
+    "password_hash": "pbkdf2_sha256$240000$82a7c2d1c60a5933d7d4cac55c198cfe$ff0e185817b931ffb5e21c3a2b744aa691a63e67c382eca723b19366f7a3aa3d",
+    "created_at": "2026-09-07T13:24:54.066914",
+    "pwd_changed_at": 1788787494.4002075
+  },
+  {
+    "user_id": "usr-152e39c84952",
+    "email": "lock-test-96503@test.local",
+    "company_name": "Lock Test",
+    "role": "user",
+    "password_hash": "pbkdf2_sha256$240000$9928871ac62aba1d2e3630dbb8747348$fd7ee712b1cd40cf0a9fa0b39520635dca9060c696fbee276d5b8ad2f3fa8d07",
+    "created_at": "2026-09-07T13:24:54.763591",
+    "pwd_changed_at": 1788787494.7636058
+  },
+  {
+    "user_id": "usr-8982011e4923",
+    "email": "exporter79714@test.local",
+    "company_name": "Test Exporter Ltd",
+    "role": "user",
+    "password_hash": "pbkdf2_sha256$240000$5623e0a9fbe80fd700d6f75991bda0c9$02a0f89db07b2b8a7663bd45ca26498f796aa6417ce8a5d4b430b06942bfd89e",
+    "created_at": "2026-09-07T13:25:58.847445",
+    "pwd_changed_at": 1788787558.8474555
+  },
+  {
+    "user_id": "usr-bb07fc7da30f",
+    "email": "pwd-test-82985@test.local",
+    "company_name": "Pwd Test",
+    "role": "user",
+    "password_hash": "pbkdf2_sha256$240000$01dbadefe1e3a3afd3144e1f28596992$575ccee54d89a97beea7bd75343f7285fc500f993ddd68b429d2271e629a8145",
+    "created_at": "2026-09-07T13:25:58.987181",
+    "pwd_changed_at": 1788787559.3222268
+  },
+  {
+    "user_id": "usr-6576f450ff88",
+    "email": "lock-test-65747@test.local",
+    "company_name": "Lock Test",
+    "role": "user",
+    "password_hash": "pbkdf2_sha256$240000$0e88c664afaafd13fac5bce228267320$7699e4f59e5f5221821475bf671d671634c776e24a6781f2ef1d16493ebb033e",
+    "created_at": "2026-09-07T13:25:59.676212",
+    "pwd_changed_at": 1788787559.6762223
+  },
+  {
+    "user_id": "usr-e24dacc280f9",
+    "email": "exporter81876@test.local",
+    "company_name": "Test Exporter Ltd",
+    "role": "user",
+    "password_hash": "pbkdf2_sha256$240000$8b6d907569011a64e0535e204faa0ba0$8bed037759d43b275bae9e28705a847ed0b80e39b4c19244f2a088f67e3d67bf",
+    "created_at": "2026-09-07T13:54:53.021128",
+    "pwd_changed_at": 1788789293.0211427
+  },
+  {
+    "user_id": "usr-7b936d98416b",
+    "email": "pwd-test-1620@test.local",
+    "company_name": "Pwd Test",
+    "role": "user",
+    "password_hash": "pbkdf2_sha256$240000$e938774a7e65bb75f35c6f34e921c4e8$4c41d103123690d29f607413bd06a1220af90b73b138f4eb0c1880f6fd065e8a",
+    "created_at": "2026-09-07T13:54:53.310871",
+    "pwd_changed_at": 1788789294.086583
+  },
+  {
+    "user_id": "usr-ff8f6efefc60",
+    "email": "lock-test-52015@test.local",
+    "company_name": "Lock Test",
+    "role": "user",
+    "password_hash": "pbkdf2_sha256$240000$ba7e9c71f6d785d17d92ed781787a9c8$f86d7db37538cc113d54156caa2e0550bf02db79ffd97884432adeb806d1805a",
+    "created_at": "2026-09-07T13:54:54.873318",
+    "pwd_changed_at": 1788789294.8733375
+  },
+  {
+    "user_id": "usr-81f6fc4de38c",
+    "email": "exporter87569@test.local",
+    "company_name": "Test Exporter Ltd",
+    "role": "user",
+    "password_hash": "pbkdf2_sha256$240000$babba181e9fad95a0154cd3f73f16d9d$ddb271156c5b5f4b0fdca3511d4b43c7a876f549c909d37d19c9169b0cc66901",
+    "created_at": "2026-09-07T14:03:25.185668",
+    "pwd_changed_at": 1788789805.1856873
+  },
+  {
+    "user_id": "usr-eed51533ebf6",
+    "email": "pwd-test-17702@test.local",
+    "company_name": "Pwd Test",
+    "role": "user",
+    "password_hash": "pbkdf2_sha256$240000$d339a5c40484b31892bdeace5f47aff7$4ee7521ab5978774c295140fd77ae64199119b6d607596f1cd72af2b10fc518b",
+    "created_at": "2026-09-07T14:03:25.485372",
+    "pwd_changed_at": 1788789806.2190945
+  },
+  {
+    "user_id": "usr-53046beffd5f",
+    "email": "lock-test-11701@test.local",
+    "company_name": "Lock Test",
+    "role": "user",
+    "password_hash": "pbkdf2_sha256$240000$4e5e2e4026e614de72388735e1115d39$20c6dc860ecfd9bd3e4f4d8583a4dbfa8a2486fbd7fc3ff84f152e232bcaeb8c",
+    "created_at": "2026-09-07T14:03:26.973132",
+    "pwd_changed_at": 1788789806.9731524
+  }
+]

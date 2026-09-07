@@ -1,0 +1,68 @@
+{
+  "analysis_id": "cc-karachi-garment-processing-unit-7ae05d",
+  "company_name": "Karachi garment processing unit",
+  "display_name": "Karachi, Sindh, Pakistan",
+  "latitude": 24.86,
+  "longitude": 67.01,
+  "sector": "textile",
+  "region": "Karachi, Pakistan",
+  "risk_score": 90.0,
+  "risk_band": "high",
+  "overall_confidence": 0.65,
+  "overall_status": "ok",
+  "components": [
+    {
+      "name": "satellite",
+      "label": "Satellite Signal",
+      "weight": 0.4,
+      "status": "insufficient_data",
+      "score": null,
+      "confidence": null,
+      "rationale": "Satellite image analysis could not be completed. Imagery may be unavailable or insufficient for AI interpretation.",
+      "observations": [],
+      "risk_indicators": [],
+      "extracted_claims": []
+    },
+    {
+      "name": "disclosure",
+      "label": "Disclosure Discrepancy",
+      "weight": 0.4,
+      "status": "insufficient_data",
+      "score": null,
+      "confidence": null,
+      "rationale": "ESG disclosure analysis could not be completed. Public disclosures may be unavailable or insufficient.",
+      "observations": [],
+      "risk_indicators": [],
+      "extracted_claims": []
+    },
+    {
+      "name": "shipping",
+      "label": "Shipment Activity",
+      "weight": 0.2,
+      "status": "ok",
+      "score": 90.0,
+      "confidence": 0.65,
+      "rationale": "Facility in close proximity to major port. High trade-activity indicator.",
+      "observations": [],
+      "risk_indicators": [],
+      "extracted_claims": []
+    }
+  ],
+  "risk_signals": [],
+  "rationale": "Satellite Signal: Insufficient data — not included in score. Disclosure Discrepancy: Insufficient data — not included in score. Shipment Activity: Facility in close proximity to major port. High trade-activity indicator. Missing sources: Satellite Signal, Disclosure Discrepancy.",
+  "image_reference": "cc-karachi-garment-processing-unit-7ae05d.png",
+  "acquisition_date": "2026-09-07",
+  "disclosure_sources": [
+    "https://garesources.net/sustainability-report/",
+    "https://www.britishcouncil.pk/sites/default/files/textile_legacies_report.pdf",
+    "https://gulahmed.com/wp/wp-content/uploads/2024/10/Annual_report_2024.pdf",
+    "https://esgsustain.secp.gov.pk/",
+    "https://esgsustain.secp.gov.pk/guidelines-and-circulars/",
+    "https://srca.com.pk/2026/07/30/esg-reporting-for-manufacturing-companies-in-pakistan/"
+  ],
+  "missing_sources": [
+    "Satellite Signal",
+    "Disclosure Discrepancy"
+  ],
+  "analyzed_at": "2026-09-07T07:26:48.121096"
+}
